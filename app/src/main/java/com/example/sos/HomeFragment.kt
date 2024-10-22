@@ -4,24 +4,25 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import androidx.fragment.app.Fragment
-import com.example.sos.databinding.FragmentHomeBinding
+import com.example.sos.R
 
 class HomeFragment : Fragment() {
-
-    private var _binding: FragmentHomeBinding? = null
-    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        // Inflate the layout manually
+        val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        // Find views using findViewById
+        val sosButton: Button = view.findViewById(R.id.button)
+        sosButton.setOnClickListener {
+            // Handle button click
+        }
+
+        return view
     }
 }

@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.ads.mediationtestsuite.activities.HomeActivity
 import com.google.android.material.textfield.TextInputEditText
 
 class LoginActivity : AppCompatActivity() {
@@ -47,7 +46,7 @@ class LoginActivity : AppCompatActivity() {
             if (email == "admin@example.com" && password == "password") {
                 Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
                 // Pindah ke halaman Home atau Main setelah login sukses
-                val intent = Intent(this, HomeActivity::class.java)
+                val intent = Intent(this, HomeFragment::class.java)
                 startActivity(intent)
                 finish() // Untuk menghapus activity ini dari back stack
             } else {

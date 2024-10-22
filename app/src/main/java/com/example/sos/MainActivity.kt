@@ -19,4 +19,5 @@ class MainActivity : AppCompatActivity() {
     }
     //Komen doang buat tes
     //test lagi 1234
+    //new lagi
 }

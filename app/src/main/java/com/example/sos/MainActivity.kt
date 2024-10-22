@@ -22,5 +22,6 @@ class MainActivity : AppCompatActivity() {
     //new lagi
     //test
     //new
-    //krizz
+    //krizz\
+    //ep
 }

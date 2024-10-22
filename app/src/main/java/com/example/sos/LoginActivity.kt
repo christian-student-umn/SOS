@@ -2,44 +2,68 @@ package com.example.sos
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextUtils
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_login.*
+import com.google.android.ads.mediationtestsuite.activities.HomeActivity
+import com.google.android.material.textfield.TextInputEditText
 
 class LoginActivity : AppCompatActivity() {
+
+    private lateinit var etEmail: TextInputEditText
+    private lateinit var etPassword: TextInputEditText
+    private lateinit var btnLogin: Button
+    private lateinit var tvCreateAccount: TextView
+    private lateinit var tvForgotPassword: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Handle login button click
-        loginButton.setOnClickListener {
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString().trim()
+        // Inisialisasi komponen UI
+        etEmail = findViewById(R.id.etEmail)
+        etPassword = findViewById(R.id.etPassword)
+        btnLogin = findViewById(R.id.btnLogin)
+        tvCreateAccount = findViewById(R.id.tvCreateAccount)
+        tvForgotPassword = findViewById(R.id.tvForgotPassword)
 
-            // Basic validation
-            if (email.isEmpty()) {
-                Toast.makeText(this, "Please enter your email", Toast.LENGTH_SHORT).show()
-            } else if (password.isEmpty()) {
-                Toast.makeText(this, "Please enter your password", Toast.LENGTH_SHORT).show()
+        // Aksi saat tombol login ditekan
+        btnLogin.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            val password = etPassword.text.toString().trim()
+
+            if (TextUtils.isEmpty(email)) {
+                etEmail.error = "Email harus diisi"
+                return@setOnClickListener
+            }
+            if (TextUtils.isEmpty(password)) {
+                etPassword.error = "Password harus diisi"
+                return@setOnClickListener
+            }
+
+            // Validasi login (logika sederhana, bisa diganti dengan autentikasi Firebase)
+            if (email == "admin@example.com" && password == "password") {
+                Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
+                // Pindah ke halaman Home atau Main setelah login sukses
+                val intent = Intent(this, HomeActivity::class.java)
+                startActivity(intent)
+                finish() // Untuk menghapus activity ini dari back stack
             } else {
-                // Simulate login success or failure
-                // Replace this with actual authentication logic (e.g., Firebase, server, etc.)
-                if (email == "test@example.com" && password == "password") {
-                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-                    // Proceed to next activity or dashboard
-                    // val intent = Intent(this, DashboardActivity::class.java)
-                    // startActivity(intent)
-                } else {
-                    Toast.makeText(this, "Invalid email or password", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Navigate to Sign-Up screen
-        createAccountText.setOnClickListener {
+        // Aksi saat pengguna ingin membuat akun baru
+        tvCreateAccount.setOnClickListener {
             val intent = Intent(this, SignupActivity::class.java)
             startActivity(intent)
+        }
+
+        // Aksi saat pengguna lupa password (bisa ditambahkan logika reset password)
+        tvForgotPassword.setOnClickListener {
+            Toast.makeText(this, "Fitur lupa password belum tersedia", Toast.LENGTH_SHORT).show()
         }
     }
 }

@@ -13,15 +13,16 @@
         android:layout_margin="16dp" />
 
     <!-- SearchView -->
-    <SearchView
+    <androidx.appcompat.widget.SearchView
         android:id="@+id/search_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:queryHint="Search contacts"
         android:layout_margin="8dp" />
 
+
     <!-- RecyclerView -->
-    <RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_contacts"
         android:layout_width="match_parent"
         android:layout_height="0dp"

@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.auth.FirebaseAuth
 
 class SignupActivity : AppCompatActivity() {
 
@@ -16,10 +17,14 @@ class SignupActivity : AppCompatActivity() {
     private lateinit var etConfirmPassword: TextInputEditText
     private lateinit var btnSignup: Button
     private lateinit var tvAlreadyHaveAccount: TextView
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
+
+        // Inisialisasi Firebase Auth
+        auth = FirebaseAuth.getInstance()
 
         // Inisialisasi komponen UI
         etEmail = findViewById(R.id.etEmail)
@@ -51,13 +56,22 @@ class SignupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Proses pendaftaran (logika sederhana, bisa diganti dengan Firebase Auth)
-            Toast.makeText(this, "Pendaftaran berhasil", Toast.LENGTH_SHORT).show()
+            // Firebase signup with email and password
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        // Pendaftaran berhasil
+                        Toast.makeText(this, "Pendaftaran berhasil", Toast.LENGTH_SHORT).show()
 
-            // Pindah ke halaman login setelah signup sukses
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
-            finish() // Untuk menghapus activity ini dari back stack
+                        // Pindah ke halaman login setelah signup sukses
+                        val intent = Intent(this, LoginActivity::class.java)
+                        startActivity(intent)
+                        finish() // Untuk menghapus activity ini dari back stack
+                    } else {
+                        // Jika pendaftaran gagal
+                        Toast.makeText(this, "Pendaftaran gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
         }
 
         // Aksi saat pengguna sudah memiliki akun

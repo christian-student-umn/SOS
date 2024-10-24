@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
 
@@ -16,19 +17,23 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvCreateAccount: TextView
     private lateinit var tvForgotPassword: TextView
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Inisialisasi komponen UI
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+
+        // Initialize UI components
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvCreateAccount = findViewById(R.id.tvCreateAccount)
         tvForgotPassword = findViewById(R.id.tvForgotPassword)
 
-        // Aksi saat tombol login ditekan
+        // Login button click action
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -42,27 +47,42 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Validasi login (logika sederhana, bisa diganti dengan autentikasi Firebase)
-            if (email == "admin@example.com" && password == "password") {
-                Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
-                // Pindah ke halaman Home atau Main setelah login sukses
-                val intent = Intent(this, HomeFragment::class.java)
-                startActivity(intent)
-                finish() // Untuk menghapus activity ini dari back stack
-            } else {
-                Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()
-            }
+            // Firebase authentication
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
+                        // Redirect to MainActivity after successful login
+                        val intent = Intent(this, MainActivity::class.java)
+                        startActivity(intent)
+                        finish() // Close the LoginActivity so user can't go back
+                    } else {
+                        Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()
+                    }
+                }
         }
 
-        // Aksi saat pengguna ingin membuat akun baru
+        // Create new account action
         tvCreateAccount.setOnClickListener {
             val intent = Intent(this, SignupActivity::class.java)
             startActivity(intent)
         }
 
-        // Aksi saat pengguna lupa password (bisa ditambahkan logika reset password)
+        // Forgot password action
         tvForgotPassword.setOnClickListener {
-            Toast.makeText(this, "Fitur lupa password belum tersedia", Toast.LENGTH_SHORT).show()
+            val email = etEmail.text.toString().trim()
+            if (TextUtils.isEmpty(email)) {
+                etEmail.error = "Masukkan email untuk reset password"
+            } else {
+                auth.sendPasswordResetEmail(email)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(this, "Link reset password telah dikirim", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Gagal mengirim link reset password", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            }
         }
     }
 }

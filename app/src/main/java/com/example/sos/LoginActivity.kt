@@ -27,15 +27,6 @@ class LoginActivity : AppCompatActivity() {
         // Initialize Firebase Auth
         auth = FirebaseAuth.getInstance()
 
-        // Check if user is already logged in
-        val sharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
-        if (sharedPreferences.getBoolean("isLoggedIn", false)) {
-            // Redirect to MainActivity if already logged in
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
-
         // Initialize UI components
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
@@ -62,8 +53,6 @@ class LoginActivity : AppCompatActivity() {
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
-                        // Save login state in SharedPreferences
-                        sharedPreferences.edit().putBoolean("isLoggedIn", true).apply()
                         // Redirect to MainActivity after successful login
                         val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)

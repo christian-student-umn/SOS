@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginBottom="16dp"
     android:background="@drawable/notification_background"
     android:padding="16dp">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvNotificationList"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:listitem="@layout/item_notification" />
-
 
     <!-- Profile Picture -->
     <ImageView
@@ -25,7 +19,7 @@
         android:src="@drawable/ic_samplepp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- Notification Message -->
     <TextView
@@ -35,9 +29,21 @@
         android:text="Dad needs your help"
         android:textStyle="bold"
         android:textSize="16sp"
+        android:textColor="@android:color/black"
         app:layout_constraintStart_toEndOf="@id/ivProfilePicture"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Time of notification -->
+    <TextView
+        android:id="@+id/tvNotificationTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="9:41 AM"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="12sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Location icon -->
     <ImageView
@@ -47,7 +53,7 @@
         android:layout_marginTop="8dp"
         android:src="@drawable/ic_location"
         app:layout_constraintStart_toStartOf="@id/tvNotificationMessage"
-        app:layout_constraintTop_toBottomOf="@id/tvNotificationMessage"/>
+        app:layout_constraintTop_toBottomOf="@id/tvNotificationMessage" />
 
     <!-- Location -->
     <TextView
@@ -56,20 +62,16 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="4th Mound road, California"
+        android:textColor="@android:color/darker_gray"
         app:layout_constraintStart_toEndOf="@id/ivLocationIcon"
         app:layout_constraintTop_toTopOf="@id/ivLocationIcon"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Time of notification -->
-    <TextView
-        android:id="@+id/tvNotificationTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="9:41"
-        android:textColor="@android:color/darker_gray"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-
+    <!-- RecyclerView for notifications -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvNotificationList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:listitem="@layout/item_notification" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

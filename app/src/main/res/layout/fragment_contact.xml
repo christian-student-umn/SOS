@@ -4,15 +4,18 @@
     android:orientation="vertical">
 
     <!-- Add Contact Button -->
+
+    <!-- SearchView -->
     <Button
         android:id="@+id/btn_add_contact"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="+ Add Contact"
         android:layout_gravity="end"
-        android:layout_margin="16dp" />
+        android:layout_margin="16dp"
+        android:textColor="#FF8852"
+        android:backgroundTint="#00FFFFFF"
+        android:text="+ Add Contact" />
 
-    <!-- SearchView -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/search_view"
         android:layout_width="match_parent"

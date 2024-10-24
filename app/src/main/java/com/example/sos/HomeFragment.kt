@@ -21,10 +21,10 @@ class HomeFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout manually
+        // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Find views using findViewById
+        // Find the SOS button
         val sosButton: Button = view.findViewById(R.id.button)
 
         // Set up the hold-down functionality for the SOS button
@@ -37,12 +37,13 @@ class HomeFragment : Fragment() {
                         if (isHeld) {
                             // Action triggered after holding for 3 seconds
                             Toast.makeText(requireContext(), "SOS Triggered!", Toast.LENGTH_SHORT).show()
+                            // You can add additional SOS logic here
                         }
                     }, holdTime)
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    // User releases the button or cancels the action
+                    // User releases the button or cancels the action before 3 seconds
                     isHeld = false
                     handler.removeCallbacksAndMessages(null)
                     true

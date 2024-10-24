@@ -1,5 +1,3 @@
-package com.example.sos
-
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -8,8 +6,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.sos.R
+import com.example.sos.SettingsFragment
 
 class HomeFragment : Fragment() {
 
@@ -24,8 +25,11 @@ class HomeFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Find the SOS button
+        // SOS Button (this is a Button in your XML)
         val sosButton: Button = view.findViewById(R.id.button)
+
+        // Settings Button (this is an ImageButton in your XML)
+        val settingsButton: ImageButton = view.findViewById(R.id.button_settings)
 
         // Set up the hold-down functionality for the SOS button
         sosButton.setOnTouchListener { _, event ->
@@ -50,6 +54,15 @@ class HomeFragment : Fragment() {
                 }
                 else -> false
             }
+        }
+
+        // Set onClickListener for settings button
+        settingsButton.setOnClickListener {
+            // Replace the fragment with SettingsFragment
+            val transaction = requireActivity().supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.fragment_container, SettingsFragment()) // 'fragment_container' is your container ID
+            transaction.addToBackStack(null) // Optional, adds to back stack so user can navigate back
+            transaction.commit()
         }
 
         return view

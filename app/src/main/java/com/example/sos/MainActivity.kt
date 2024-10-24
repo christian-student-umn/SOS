@@ -1,10 +1,10 @@
 package com.example.sos
 
+import HomeFragment
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.sos.ContactFragment
-import com.example.sos.HomeFragment
 import com.example.sos.MapFragment
 import com.example.sos.R
 import com.google.android.material.bottomnavigation.BottomNavigationView

@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
@@ -39,9 +40,9 @@ class SettingsFragment : Fragment() {
         // Set onClickListeners for settings options
         val accountOption: View = view.findViewById(R.id.account_option)
         val notificationOption: View = view.findViewById(R.id.notification_option)
-
         accountOption.setOnClickListener {
-            // Handle account settings logic
+            // Navigate to ProfileFragment
+            navigateToProfileFragment()
         }
 
         notificationOption.setOnClickListener {
@@ -78,4 +79,17 @@ class SettingsFragment : Fragment() {
                 Toast.makeText(requireContext(), "Failed to update settings", Toast.LENGTH_SHORT).show()
             }
     }
+    private fun navigateToProfileFragment() {
+        // Create a new instance of ProfileFragment
+        val profileFragment = ProfileFragment()
+
+        // Get the FragmentManager and start a transaction
+        val transaction: FragmentTransaction = parentFragmentManager.beginTransaction()
+
+        // Replace the current fragment with the ProfileFragment
+        transaction.replace(R.id.fragment_container, profileFragment) // Use your actual container ID
+        transaction.addToBackStack(null) // Optional: Add this transaction to the back stack
+        transaction.commit()
+    }
 }
+

@@ -11,7 +11,7 @@
         android:roundIcon="@drawable/logo_home"
         android:supportsRtl="true"
         android:theme="@style/Theme.SOS"
-        tools:targetApi="31">
+        tools:targetApi="33">
         <!-- Set LoginActivity as the launcher activity -->
         <activity
             android:name=".LoginActivity"

@@ -79,7 +79,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="30dp" />
 
-    <!-- Current Location TextView -->
+    <!-- Current Location TextVieww -->
     <TextView
         android:id="@+id/tv_location"
         android:layout_width="wrap_content"

@@ -5,7 +5,7 @@
 
     <!-- Add Contact Button -->
 
-    <!-- SearchView -->
+    <!-- SearchVieww -->
     <Button
         android:id="@+id/btn_add_contact"
         android:layout_width="wrap_content"

@@ -1,7 +1,8 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services") // Firebase integration
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -10,12 +11,13 @@ android {
 
     defaultConfig {
         applicationId = "com.example.sos"
-        minSdk = 25
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
     }
 
     buildTypes {
@@ -38,27 +40,23 @@ android {
 
 dependencies {
 
-    // AndroidX libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database.ktx)
+    implementation ("com.google.android.gms:play-services-maps:18.1.0")
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("androidx.fragment:fragment-ktx:1.6.1")
 
-    // Firebase SDKs
-    implementation(libs.firebase.auth.ktx)  // Authentication
-    implementation(libs.firebase.firestore)  // Firestore database
-    implementation(libs.firebase.database.ktx)  // Realtime Database (optional, for comparison)
-
-    // Google Play Services
-    implementation("com.google.android.gms:play-services-maps:18.1.0") // Google Maps
-    implementation("com.google.android.gms:play-services-location:21.0.1") // Location Services
-
-    // RecyclerView (if needed)
-    implementation("androidx.recyclerview:recyclerview:1.2.1")
-
-    // Testing
+//    implementation(libs.mediation.test.suite)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation ("androidx.recyclerview:recyclerview:1.2.1")
+
 }

@@ -25,7 +25,7 @@ class SettingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        // Initialize Firestore
+        // Initialize Firestores
         firestore = FirebaseFirestore.getInstance()
 
         // Find views

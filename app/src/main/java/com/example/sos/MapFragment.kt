@@ -8,11 +8,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -20,12 +16,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
 
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private lateinit var firestore: FirebaseFirestore
 
     private var userMarker: Marker? = null
 
@@ -38,6 +36,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        firestore = FirebaseFirestore.getInstance() // Inisialisasi Firestore
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -95,6 +94,9 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
                 super.onLocationResult(locationResult)
                 val location = locationResult.lastLocation
                 updateUserMarker(location)
+                location?.let {
+                    saveLocationToFirestore(it) // Simpan lokasi ke Firestore
+                }
             }
         }
 
@@ -122,6 +124,25 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
             // Move camera to user's location
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
         }
+    }
+
+    private fun saveLocationToFirestore(location: Location) {
+        val locationData = mapOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        firestore.collection("user_locations")
+            .add(locationData)
+            .addOnSuccessListener {
+                // Berhasil menyimpan data lokasi
+                println("Location saved successfully")
+            }
+            .addOnFailureListener { e ->
+                // Gagal menyimpan data lokasi
+                e.printStackTrace()
+            }
     }
 
     override fun onDestroy() {

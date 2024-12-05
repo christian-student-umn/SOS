@@ -19,7 +19,7 @@ class NotificationFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_notification, container, false)
 
-        // Initialize data
+        // Initialize dataa
         notificationList = listOf(
             Notification(R.drawable.ic_samplepp, "Dad needs your help", "4th Mound road, California", "9:41"),
             // Add more notifications here

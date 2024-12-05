@@ -25,7 +25,7 @@ class ContactFragment : Fragment() {
         // Handle add contact button click
         val btnAddContact = view.findViewById<View>(R.id.btn_add_contact)
         btnAddContact.setOnClickListener {
-            // Logic for adding a new contact (e.g., show a dialog or navigate to another screen)
+            // Logic for adding a new contact (e.g., show a dialog or navigate to another screen)a
         }
 
         return view

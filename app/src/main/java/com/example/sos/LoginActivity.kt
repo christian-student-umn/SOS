@@ -24,7 +24,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Initialize Firebase Auth
+        // Initialize Firebase Authen
         auth = FirebaseAuth.getInstance()
 
         // Initialize UI components

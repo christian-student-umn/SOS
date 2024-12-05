@@ -17,7 +17,7 @@ class SettingsFragment : Fragment() {
     private lateinit var firestore: FirebaseFirestore
     private lateinit var userName: TextView
     private lateinit var userEmail: TextView
-    private lateinit var userPhone: TextView // Add a TextView for phone number
+    private lateinit var userPhone: TextView // Add a TextView for phone numberr
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

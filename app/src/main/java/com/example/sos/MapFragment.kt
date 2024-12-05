@@ -27,7 +27,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
 
     private var userMarker: Marker? = null
 
-    // Dummy contact data (replace with actual dynamic data)
+    // Dummy contact data (replace with actual dynamic dataa)
     private val contacts = listOf(
         Contact("John Doe", "1234567890", "john@example.com", LatLng(37.7749, -122.4194)), // San Francisco
         Contact("Jane Smith", "9876543210", "jane@example.com", LatLng(34.0522, -118.2437)) // Los Angeles

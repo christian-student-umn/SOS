@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- Fragment Container for changing between Home, Map, and Contact pages -->
+    <!-- Fragment Container for changing between Home, Map, and Contact pagess -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="0dp"

@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.sos"
-        minSdk = 25
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.firebase.database.ktx)
     implementation ("com.google.android.gms:play-services-maps:18.1.0")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("androidx.fragment:fragment-ktx:1.6.1")
+
 //    implementation(libs.mediation.test.suite)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

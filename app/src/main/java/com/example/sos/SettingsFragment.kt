@@ -17,7 +17,7 @@ class SettingsFragment : Fragment() {
     private lateinit var firestore: FirebaseFirestore
     private lateinit var userName: TextView
     private lateinit var userEmail: TextView
-    private lateinit var userPhone: TextView // Add a TextView for phone numberr
+    private lateinit var userPhone: TextView // Add a TextView for phone number
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,7 +25,7 @@ class SettingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        // Initialize Firestores
+        // Initialize Firestore
         firestore = FirebaseFirestore.getInstance()
 
         // Find views

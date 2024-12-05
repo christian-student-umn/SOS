@@ -45,7 +45,7 @@ class SettingsFragment : Fragment() {
         // Load user profile from Firestore
         loadUserProfile()
 
-        // Set up click listener for profile image
+        // Set up click listener for profile images
         profileImage.setOnClickListener {
             openImageChooser()
         }

@@ -7,7 +7,7 @@
     android:padding="16dp"
     android:gravity="center">
 
-    <!-- Profile section -->
+    <!-- Profile Section -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -16,7 +16,6 @@
         android:padding="16dp"
         android:layout_marginBottom="24dp">
 
-        <!-- Profile Imagee -->
         <ImageView
             android:id="@+id/profile_image"
             android:layout_width="80dp"
@@ -28,7 +27,6 @@
             android:clickable="true"
             android:focusable="true" />
 
-        <!-- Name and Email -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -49,7 +47,6 @@
                 android:layout_height="wrap_content"
                 android:text="Phone Number"
                 android:textSize="16sp" />
-
 
             <TextView
                 android:id="@+id/user_email"
@@ -116,9 +113,25 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginEnd="100dp"
             android:text="Notification"
             android:textSize="16sp"
             android:textColor="@color/orange" />
+
+        <Switch
+            android:id="@+id/notification_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
+    <!-- Logout Button -->
+    <Button
+        android:id="@+id/logout_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="48dp"
+        android:text="Logout"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/red" />
 </LinearLayout>

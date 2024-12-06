@@ -1,15 +1,15 @@
 package com.example.sos
 
 import android.app.Activity
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
@@ -23,6 +23,7 @@ class SettingsFragment : Fragment() {
     private lateinit var userEmail: TextView
     private lateinit var userPhone: TextView
     private lateinit var profileImage: ImageView
+    private lateinit var notificationSwitch: Switch
 
     private val PICK_IMAGE_REQUEST = 1
     private var selectedImageUri: Uri? = null
@@ -33,7 +34,7 @@ class SettingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        // Initialize Firestores
+        // Initialize Firestore
         firestore = FirebaseFirestore.getInstance()
 
         // Find views
@@ -41,11 +42,12 @@ class SettingsFragment : Fragment() {
         userEmail = view.findViewById(R.id.user_email)
         userPhone = view.findViewById(R.id.user_phone)
         profileImage = view.findViewById(R.id.profile_image)
+        notificationSwitch = view.findViewById(R.id.notification_switch)
 
         // Load user profile from Firestore
         loadUserProfile()
 
-        // Set up click listener for profile images
+        // Set up click listener for profile image
         profileImage.setOnClickListener {
             openImageChooser()
         }
@@ -54,6 +56,21 @@ class SettingsFragment : Fragment() {
         val accountOption: View = view.findViewById(R.id.account_option)
         accountOption.setOnClickListener {
             navigateToProfileFragment()
+        }
+
+        // Set up switch for notification
+        notificationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                Toast.makeText(requireContext(), "Notifications Enabled", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Notifications Disabled", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Logout button click listener
+        val logoutButton: Button = view.findViewById(R.id.logout_button)
+        logoutButton.setOnClickListener {
+            showLogoutConfirmation()
         }
 
         return view
@@ -130,5 +147,24 @@ class SettingsFragment : Fragment() {
             .replace(R.id.fragment_container, profileFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun showLogoutConfirmation() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to log out?")
+            .setPositiveButton("Yes") { dialog, _ ->
+                FirebaseAuth.getInstance().signOut()
+                Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+
+                // Navigate back to login screen
+                startActivity(Intent(requireContext(), LoginActivity::class.java))
+                requireActivity().finish()
+            }
+            .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, _ ->
+                dialog.dismiss()
+            })
+            .show()
     }
 }

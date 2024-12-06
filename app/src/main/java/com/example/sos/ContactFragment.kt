@@ -16,7 +16,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-data class Contact(val name: String, val phone: String, val email: String)
+
+data class Contact(
+    val name: String = "",
+    val phone: String = "",
+    val email: String = ""
+)
+
 
 class ContactFragment : Fragment() {
     private lateinit var recyclerViewContacts: RecyclerView

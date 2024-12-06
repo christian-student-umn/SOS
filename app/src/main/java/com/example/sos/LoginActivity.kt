@@ -22,19 +22,25 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Periksa status login menggunakan FirebaseAuth
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            // Jika user sudah login, arahkan ke MainActivity
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_login)
 
-        // Initialize Firebase Authen
         auth = FirebaseAuth.getInstance()
 
-        // Initialize UI components
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvCreateAccount = findViewById(R.id.tvCreateAccount)
         tvForgotPassword = findViewById(R.id.tvForgotPassword)
 
-        // Login button click action
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -48,28 +54,22 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Firebase authentication
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         Toast.makeText(this, "Login sukses", Toast.LENGTH_SHORT).show()
-                        // Redirect to MainActivity after successful login
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish() // Close the LoginActivity so user can't go back
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
                     } else {
                         Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()
                     }
                 }
         }
 
-        // Create new account action
         tvCreateAccount.setOnClickListener {
-            val intent = Intent(this, SignupActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SignupActivity::class.java))
         }
 
-        // Forgot password action
         tvForgotPassword.setOnClickListener {
             val email = etEmail.text.toString().trim()
             if (TextUtils.isEmpty(email)) {

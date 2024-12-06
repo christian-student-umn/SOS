@@ -3,16 +3,22 @@ package com.example.sos
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
+import com.bumptech.glide.request.transition.Transition
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -27,16 +33,16 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
 
     private var userMarker: Marker? = null
 
-    // Dummy contact data (replace with actual dynamic dataa)
+    // Dummy contact data
     private val contacts = listOf(
-        Contact("John Doe", "1234567890", "john@example.com", LatLng(37.7749, -122.4194)), // San Francisco
-        Contact("Jane Smith", "9876543210", "jane@example.com", LatLng(34.0522, -118.2437)) // Los Angeles
+        Contact("John Doe", "1234567890", "john@example.com", LatLng(37.7749, -122.4194), ""),
+        Contact("Jane Smith", "9876543210", "jane@example.com", LatLng(34.0522, -118.2437), "")
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        firestore = FirebaseFirestore.getInstance() // Inisialisasi Firestore
+        firestore = FirebaseFirestore.getInstance()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,68 +57,63 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
     }
 
     private fun setupMap() {
-        // Check location permissions
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
             return
         }
 
         googleMap.isMyLocationEnabled = true
-
-        // Real-time user location updates
         startLocationUpdates()
 
-        // Add markers for contacts
+        // Tambahkan marker untuk kontak
         contacts.forEach { contact ->
-            googleMap.addMarker(
-                MarkerOptions()
-                    .position(contact.location)
-                    .title(contact.name)
-                    .snippet(contact.phone)
-            )
+            Glide.with(this)
+                .asBitmap()
+                .load(contact.profilePictureUrl)
+                .circleCrop()
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                        val marker = googleMap.addMarker(
+                            MarkerOptions()
+                                .position(contact.location)
+                                .title(contact.name)
+                                .snippet(contact.phone)
+                                .icon(BitmapDescriptorFactory.fromBitmap(resource))
+                        )
+                        marker?.tag = contact
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {}
+                })
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         val locationRequest = LocationRequest.create().apply {
-            interval = 10000 // 10 seconds
-            fastestInterval = 5000 // 5 seconds
+            interval = 10000
+            fastestInterval = 5000
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
 
-        // Callback for location changes
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
                 val location = locationResult.lastLocation
                 updateUserMarker(location)
                 location?.let {
-                    saveLocationToFirestore(it) // Simpan lokasi ke Firestore
+                    saveLocationToFirestore(it)
                 }
             }
         }
 
-        // Request location updates
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            requireActivity().mainLooper
-        )
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, requireActivity().mainLooper)
     }
 
     private fun updateUserMarker(location: Location?) {
         location?.let {
             val userLatLng = LatLng(it.latitude, it.longitude)
 
-            // If marker already exists, update its position
             if (userMarker == null) {
                 userMarker = googleMap.addMarker(
                     MarkerOptions().position(userLatLng).title("You are here")
@@ -121,7 +122,6 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
                 userMarker?.position = userLatLng
             }
 
-            // Move camera to user's location
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f))
         }
     }
@@ -136,18 +136,15 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
         firestore.collection("user_locations")
             .add(locationData)
             .addOnSuccessListener {
-                // Berhasil menyimpan data lokasi
                 println("Location saved successfully")
             }
             .addOnFailureListener { e ->
-                // Gagal menyimpan data lokasi
                 e.printStackTrace()
             }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Stop location updates to save battery
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
@@ -155,5 +152,11 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
     }
 
-    data class Contact(val name: String, val phone: String, val email: String, val location: LatLng)
+    data class Contact(
+        val name: String,
+        val phone: String,
+        val email: String,
+        val location: LatLng,
+        val profilePictureUrl: String
+    )
 }

@@ -50,6 +50,6 @@
             android:layout_height="wrap_content"
             android:text="Update Profile"
             android:layout_marginTop="50dp"
-            android:backgroundTint="@color/orange" /> <!-- Added background tint -->
+            android:backgroundTint="#FF8852" /> <!-- Added background tint -->
     </LinearLayout>
 </LinearLayout>

@@ -1,6 +1,7 @@
 package com.example.sos
 
 import android.app.Activity
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
@@ -34,7 +35,7 @@ class SettingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        // Initialize Firestore
+        // Initialize Firestore and Firebase Auth
         firestore = FirebaseFirestore.getInstance()
 
         // Find views
@@ -52,19 +53,19 @@ class SettingsFragment : Fragment() {
             openImageChooser()
         }
 
-        // Add account button click listener
+        // Handle account options button
         val accountOption: View = view.findViewById(R.id.account_option)
         accountOption.setOnClickListener {
             navigateToProfileFragment()
         }
 
-        // Set up switch for notification
+        // Set up switch for notifications
         notificationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                Toast.makeText(requireContext(), "Notifications Enabled", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "Notifications Disabled", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(
+                requireContext(),
+                if (isChecked) "Notifications Enabled" else "Notifications Disabled",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         // Logout button click listener
@@ -87,8 +88,6 @@ class SettingsFragment : Fragment() {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             selectedImageUri = data.data
             profileImage.setImageURI(selectedImageUri)
-
-            // Optional: Upload image to Firebase Storage
             uploadImageToFirebase(selectedImageUri)
         }
     }
@@ -101,16 +100,27 @@ class SettingsFragment : Fragment() {
             storageRef.putFile(imageUri)
                 .addOnSuccessListener {
                     storageRef.downloadUrl.addOnSuccessListener { uri ->
-                        // Save the download URL to Firestore
                         firestore.collection("profiles").document(userId)
                             .update("profileImageUrl", uri.toString())
                             .addOnSuccessListener {
-                                Toast.makeText(requireContext(), "Profile image updated", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Profile image updated",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to update Firestore",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                     }
                 }
                 .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT)
+                        .show()
                 }
         }
     }
@@ -121,30 +131,33 @@ class SettingsFragment : Fragment() {
             val docRef = firestore.collection("profiles").document(userId)
             docRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val name = document.getString("name")
-                    val email = document.getString("email")
-                    val phone = document.getString("number")
+                    userName.text = document.getString("name") ?: "N/A"
+                    userEmail.text = document.getString("email") ?: "N/A"
+                    userPhone.text = document.getString("number") ?: "N/A"
                     val profileImageUrl = document.getString("profileImageUrl")
 
-                    userName.text = name
-                    userEmail.text = email
-                    userPhone.text = phone
-
-                    // Load profile image if available
                     if (!profileImageUrl.isNullOrEmpty()) {
                         Glide.with(this).load(profileImageUrl).into(profileImage)
                     }
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Profile data does not exist",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT)
+                    .show()
             }
+        } else {
+            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun navigateToProfileFragment() {
-        val profileFragment = ProfileFragment()
         parentFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, profileFragment)
+            .replace(R.id.fragment_container, ProfileFragment())
             .addToBackStack(null)
             .commit()
     }
@@ -154,17 +167,34 @@ class SettingsFragment : Fragment() {
             .setTitle("Logout")
             .setMessage("Are you sure you want to log out?")
             .setPositiveButton("Yes") { dialog, _ ->
-                FirebaseAuth.getInstance().signOut()
-                Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
+                try {
+                    // Sign out from Firebase
+                    FirebaseAuth.getInstance().signOut()
 
-                // Navigate back to login screen
-                startActivity(Intent(requireContext(), LoginActivity::class.java))
-                requireActivity().finish()
-            }
-            .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, _ ->
+                    // Clear SharedPreferences (if used)
+                    val sharedPreferences = requireContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                    sharedPreferences.edit().clear().apply()
+
+                    // Navigate to LoginActivity
+                    val intent = Intent(requireContext(), LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+
+                    // Add transition animation
+                    requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                    requireActivity().finish()
+
+                    // Show success message
+                    Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error during logout: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+
                 dialog.dismiss()
-            })
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
             .show()
     }
 }

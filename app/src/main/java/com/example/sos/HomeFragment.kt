@@ -19,22 +19,16 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.messaging.FirebaseMessaging
 import java.util.Locale
 
 class HomeFragment : Fragment() {
 
-    private val holdTime = 3000L // 3 seconds
+    private val holdTime = 3000L // 3 seconds in milliseconds
     private var isHeld = false
     private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationTextView: TextView
-
-    // Firebase database reference
-    private lateinit var database: DatabaseReference
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,10 +38,16 @@ class HomeFragment : Fragment() {
 
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        database = FirebaseDatabase.getInstance().reference.child("contacts")
 
+        // SOS Button
         val sosButton: Button = view.findViewById(R.id.button)
         locationTextView = view.findViewById(R.id.tv_location)
+
+        // Settings Button
+        val settingsButton: ImageButton = view.findViewById(R.id.button_settings)
+
+        // Notification Button
+        val notificationButton: ImageButton = view.findViewById(R.id.button_notification)
 
         // Set up the hold-down functionality for the SOS button
         sosButton.setOnTouchListener { _, event ->
@@ -56,7 +56,7 @@ class HomeFragment : Fragment() {
                     isHeld = true
                     handler.postDelayed({
                         if (isHeld) {
-                            triggerSOS()
+                            Toast.makeText(requireContext(), "SOS Triggered!", Toast.LENGTH_SHORT).show()
                         }
                     }, holdTime)
                     true
@@ -70,43 +70,26 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Fetch current location
+        // Navigate to NotificationFragment when the notification button is clicked
+        notificationButton.setOnClickListener {
+            val transaction = requireActivity().supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.fragment_container, NotificationFragment())
+            transaction.addToBackStack(null)
+            transaction.commit()
+        }
+
+        // Navigate to SettingsFragment when the settings button is clicked
+        settingsButton.setOnClickListener {
+            val transaction = requireActivity().supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.fragment_container, SettingsFragment())
+            transaction.addToBackStack(null)
+            transaction.commit()
+        }
+
+        // Fetch and display current location
         fetchLocation()
 
         return view
-    }
-
-    private fun triggerSOS() {
-        Toast.makeText(requireContext(), "SOS Triggered!", Toast.LENGTH_SHORT).show()
-
-        // Fetch user's contacts
-        val userId = "current_user_id" // Replace with your method to fetch current user ID
-        database.child(userId).get().addOnSuccessListener { snapshot ->
-            if (snapshot.exists()) {
-                val contacts = snapshot.children.mapNotNull { it.key }
-
-                // Notify each contact
-                for (contactId in contacts) {
-                    sendNotificationToContact(contactId)
-                }
-            } else {
-                Toast.makeText(requireContext(), "No contacts found.", Toast.LENGTH_SHORT).show()
-            }
-        }.addOnFailureListener {
-            Toast.makeText(requireContext(), "Failed to fetch contacts.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun sendNotificationToContact(contactId: String) {
-        // Simulate sending a notification by calling your backend service
-        FirebaseMessaging.getInstance().subscribeToTopic(contactId)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(requireContext(), "Notification sent to $contactId.", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), "Failed to notify $contactId.", Toast.LENGTH_SHORT).show()
-                }
-            }
     }
 
     private fun fetchLocation() {

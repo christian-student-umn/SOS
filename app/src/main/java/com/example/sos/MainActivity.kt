@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Set default fragment to HomeFragmentt
+        // Set default fragment to HomeFragment
         loadFragment(HomeFragment())
 
         // Setup bottom navigation bar using findViewById

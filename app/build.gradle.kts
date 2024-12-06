@@ -53,6 +53,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation ("androidx.fragment:fragment-ktx:1.6.1")
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.messaging.ktx)
 
 //    implementation(libs.mediation.test.suite)
     testImplementation(libs.junit)

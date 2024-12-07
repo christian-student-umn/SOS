@@ -119,24 +119,49 @@ class ContactFragment : Fragment() {
     }
 
     private fun addContactToFirestore(name: String, email: String, phone: String) {
-        val contact = Contact(name, phone, email)
+        // Cek apakah email ada di koleksi emailDB
+        firestore.collection("emailDB")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    // Email ditemukan di emailDB, lanjutkan untuk menambahkan kontak
+                    val contact = Contact(name, phone, email)
 
-        firestore.collection("contacts")
-            .add(contact)
-            .addOnSuccessListener {
-                contacts.add(contact)
-                contactAdapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "Contact added!", Toast.LENGTH_SHORT).show()
+                    firestore.collection("contacts")
+                        .add(contact)
+                        .addOnSuccessListener {
+                            contacts.add(contact)
+                            contactAdapter.notifyDataSetChanged()
+                            Toast.makeText(requireContext(), "Contact added!", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Firestore", "Error adding contact", e)
+                            Toast.makeText(
+                                requireContext(),
+                                "Error adding contact. Please try again.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                } else {
+                    // Email tidak ditemukan di emailDB
+                    Toast.makeText(
+                        requireContext(),
+                        "Email not registered in the database!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
             .addOnFailureListener { e ->
-                Log.e("Firestore", "Error adding contact", e)
+                Log.e("Firestore", "Error checking email in emailDB", e)
                 Toast.makeText(
                     requireContext(),
-                    "Error adding contact. Please try again.",
+                    "Error checking email. Please try again.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
     }
+
 
     private fun loadContactsFromFirestore() {
         firestore.collection("contacts")

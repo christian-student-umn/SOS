@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class SignupActivity : AppCompatActivity() {
 
@@ -18,13 +19,15 @@ class SignupActivity : AppCompatActivity() {
     private lateinit var btnSignup: Button
     private lateinit var tvAlreadyHaveAccount: TextView
     private lateinit var auth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
 
-        // Inisialisasi Firebase Auth
+        // Inisialisasi Firebase Auth dan Firestore
         auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
         // Inisialisasi komponen UI
         etEmail = findViewById(R.id.etEmail)
@@ -60,8 +63,11 @@ class SignupActivity : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Pendaftaran berhasil
-                        Toast.makeText(this, "Pendaftaran berhasil", Toast.LENGTH_SHORT).show()
+                        val user = task.result?.user
+                        user?.let {
+                            // Simpan email ke Firestore
+                            saveEmailToFirestore(it.uid, email)
+                        }
 
                         // Pindah ke halaman login setelah signup sukses
                         val intent = Intent(this, LoginActivity::class.java)
@@ -81,6 +87,20 @@ class SignupActivity : AppCompatActivity() {
             finish() // Kembali ke halaman login
         }
     }
-}
 
-//testing aja
+    private fun saveEmailToFirestore(userId: String, email: String) {
+        val userData = hashMapOf(
+            "email" to email,
+            "createdAt" to System.currentTimeMillis()
+        )
+
+        firestore.collection("emailDB").document(userId)
+            .set(userData)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Email berhasil disimpan ke Firestore", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Gagal menyimpan email: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+}

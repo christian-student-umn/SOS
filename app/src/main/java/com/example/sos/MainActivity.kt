@@ -6,6 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +28,20 @@ class MainActivity : AppCompatActivity() {
         // Jika user sudah login, tampilkan main layout
         setContentView(R.layout.activity_main)
 
+        // Mendapatkan token FCM dan menyimpannya ke Firestore
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Mendapatkan token FCM
+                val token = task.result
+                Log.d("FCM", "FCM Token: $token")
+
+                // Menyimpan token ke Firestore
+                saveTokenToFirebase(token)
+            } else {
+                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+            }
+        }
+
         // Default fragment: HomeFragment
         loadFragment(HomeFragment())
 
@@ -38,6 +55,20 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    // Fungsi untuk menyimpan token ke Firestore
+    private fun saveTokenToFirebase(token: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val userRef = FirebaseFirestore.getInstance().collection("users").document(userId!!)
+
+        userRef.update("fcmToken", token)
+            .addOnSuccessListener {
+                Log.d("FCM", "Token berhasil disimpan")
+            }
+            .addOnFailureListener { e ->
+                Log.w("FCM", "Error menyimpan token", e)
+            }
     }
 
     private fun loadFragment(fragment: Fragment) {

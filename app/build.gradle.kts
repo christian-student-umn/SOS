@@ -52,6 +52,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-maps:18.1.0")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation ("androidx.fragment:fragment-ktx:1.6.1")
+    implementation ("androidx.core:core:1.9.0")
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.messaging.ktx)
 

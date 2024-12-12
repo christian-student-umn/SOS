@@ -9,19 +9,21 @@
 
     <!-- Profile Section -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
         android:padding="16dp"
         android:layout_marginBottom="24dp">
 
+        <!-- Fixed Size Profile Image -->
         <ImageView
             android:id="@+id/profile_image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:layout_marginEnd="16dp"
             android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
             android:src="@drawable/logo"
             android:background="@drawable/circle_background"
             android:clickable="true"
@@ -60,7 +62,7 @@
 
     <!-- Divider -->
     <View
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="16dp"
         android:background="@color/light_gray" />
@@ -68,7 +70,7 @@
     <!-- Account Option -->
     <LinearLayout
         android:id="@+id/account_option"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -94,7 +96,7 @@
     <!-- Notification Option -->
     <LinearLayout
         android:id="@+id/notification_option"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -107,13 +109,14 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_notification"
-            android:backgroundTint="@color/orange"/>
+            android:backgroundTint="@color/orange" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="100dp"
+            android:layout_marginEnd="16dp"
+            android:layout_weight="1"
             android:text="Notification"
             android:textSize="16sp"
             android:textColor="@color/orange" />
@@ -123,6 +126,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
+
 
     <!-- Logout Button -->
     <Button

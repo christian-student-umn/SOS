@@ -128,32 +128,40 @@ class SettingsFragment : Fragment() {
     private fun loadUserProfile() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId != null) {
-            val docRef = firestore.collection("profiles").document(userId)
-            docRef.get().addOnSuccessListener { document ->
-                if (document.exists()) {
-                    userName.text = document.getString("name") ?: "N/A"
-                    userEmail.text = document.getString("email") ?: "N/A"
-                    userPhone.text = document.getString("number") ?: "N/A"
-                    val profileImageUrl = document.getString("profileImageUrl")
+            // Fetch name, phone, and profile image from "profiles" collection
+            val profileDocRef = firestore.collection("profiles").document(userId)
+            profileDocRef.get().addOnSuccessListener { profileDocument ->
+                if (profileDocument.exists()) {
+                    userName.text = profileDocument.getString("name") ?: "N/A"
+                    userPhone.text = profileDocument.getString("number") ?: "N/A"
+                    val profileImageUrl = profileDocument.getString("profileImageUrl")
 
                     if (!profileImageUrl.isNullOrEmpty()) {
                         Glide.with(this).load(profileImageUrl).into(profileImage)
                     }
                 } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Profile data does not exist",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Profile data does not exist", Toast.LENGTH_SHORT).show()
                 }
             }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(requireContext(), "Failed to load profile data", Toast.LENGTH_SHORT).show()
+            }
+
+            // Fetch email from "emailDB" collection
+            val emailDocRef = firestore.collection("emailDB").document(userId)
+            emailDocRef.get().addOnSuccessListener { emailDocument ->
+                if (emailDocument.exists()) {
+                    userEmail.text = emailDocument.getString("email") ?: "N/A"
+                } else {
+                    Toast.makeText(requireContext(), "Email data does not exist", Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to load email data", Toast.LENGTH_SHORT).show()
             }
         } else {
             Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun navigateToProfileFragment() {
         parentFragmentManager.beginTransaction()

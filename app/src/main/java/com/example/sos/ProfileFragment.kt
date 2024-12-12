@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
 
 class ProfileFragment : Fragment() {
 
@@ -55,8 +56,11 @@ class ProfileFragment : Fragment() {
 
     private fun loadProfileData() {
         val userId = auth.currentUser?.uid
-        if (userId != null) {
-            firestore.collection("profiles").document(userId).get()
+        val userEmail = auth.currentUser?.email
+
+        if (userId != null && userEmail != null) {
+            firestore.collection("emailDB").document(userEmail)
+                .collection("profiles").document(userId).get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         val name = document.getString("name") ?: ""
@@ -79,22 +83,42 @@ class ProfileFragment : Fragment() {
     private fun updateProfile(name: String, number: String) {
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            val user = mapOf(
-                "name" to name,
-                "number" to number,
-                "userId" to currentUser.uid
-            )
+            val userId = currentUser.uid
+            val userEmail = currentUser.email
 
-            firestore.collection("profiles").document(currentUser.uid)
-                .set(user)
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                    tvCurrentName.text = "Current Name: $name"
-                    tvCurrentNumber.text = "Current Number: $number"
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(context, "Failed to update profile: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+            if (userEmail != null) {
+                val profileData = mapOf(
+                    "name" to name,
+                    "number" to number,
+                    "profileImageURL" to "default_image_url", // Update jika ada upload gambar
+                    "userID" to userId
+                )
+
+                // Tambahkan/Perbarui subcollection profiles
+                firestore.collection("emailDB").document(userEmail)
+                    .collection("profiles").document(userId)
+                    .set(profileData)
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                        tvCurrentName.text = "Current Name: $name"
+                        tvCurrentNumber.text = "Current Number: $number"
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Failed to update profile: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+
+                // Pastikan field email dan createdAt tetap ada di document emailDB
+                val emailData = mapOf(
+                    "email" to userEmail,
+                    "createdAt" to Timestamp.now()
+                )
+
+                firestore.collection("emailDB").document(userEmail)
+                    .set(emailData)
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Failed to set email metadata: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
 }

@@ -11,10 +11,12 @@
 
         <!-- Foto Profil -->
         <ImageView
-            android:id="@+id/iv_profile"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_profile" /> <!-- Ganti dengan icon profil kamu -->
+            android:id="@+id/img_profile"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="8dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_profile" />
 
         <!-- Nama Pengguna -->
         <TextView
@@ -36,4 +38,13 @@
         android:visibility="gone"
         android:text="email@pengguna.com"
         android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tv_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="Phone Number"
+        android:textSize="14sp" />
+
 </LinearLayout>

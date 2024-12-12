@@ -20,8 +20,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 data class Contact(
     val name: String = "",
     val phone: String = "",
-    val email: String = ""
+    val email: String = "",
+    val profileImageURL: String = ""
 )
+
 
 
 class ContactFragment : Fragment() {
@@ -86,25 +88,18 @@ class ContactFragment : Fragment() {
 
         // Save contact
         btnSaveContact.setOnClickListener {
-            val editName = view.findViewById<EditText>(R.id.edit_name)
             val editEmail = view.findViewById<EditText>(R.id.edit_email)
-            val editPhone = view.findViewById<EditText>(R.id.edit_phone)
-
-            val name = editName.text.toString().trim()
             val email = editEmail.text.toString().trim()
-            val phone = editPhone.text.toString().trim()
 
-            if (name.isNotEmpty() && email.isNotEmpty() && phone.isNotEmpty()) {
-                addContactToFirestore(name, email, phone)
-                editName.text.clear()
+            if (email.isNotEmpty()) {
+                addContactToFirestore(email)
                 editEmail.text.clear()
-                editPhone.text.clear()
                 toggleAddContactForm(false)
             } else {
-                Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(requireContext(), "Please fill in the email field", Toast.LENGTH_SHORT).show()
             }
         }
+
 
         // Cancel adding contact
         btnCancelContact.setOnClickListener {
@@ -117,12 +112,11 @@ class ContactFragment : Fragment() {
         formAddContact.visibility = if (show) View.VISIBLE else View.GONE
     }
 
-    private fun addContactToFirestore(name: String, email: String, phone: String) {
+    private fun addContactToFirestore(email: String) {
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {
             val userEmail = currentUser.email
             if (email == userEmail) {
-                // Cegah pengguna menambahkan dirinya sendiri sebagai kontak
                 Toast.makeText(
                     requireContext(),
                     "You cannot add your own email as a contact!",
@@ -133,14 +127,18 @@ class ContactFragment : Fragment() {
 
             val userUid = currentUser.uid
 
-            firestore.collection("emailDB")
-                .whereEqualTo("email", email)
-                .get()
+            // Cek email di emailDB dan ambil data dari subcollection profiles
+            firestore.collection("emailDB").document(email)
+                .collection("profiles").get()
                 .addOnSuccessListener { querySnapshot ->
                     if (!querySnapshot.isEmpty) {
-                        // Email ditemukan di emailDB
+                        val document = querySnapshot.documents.first()
+                        val name = document.getString("name") ?: "Unknown"
+                        val phone = document.getString("number") ?: "N/A"
+
                         val contact = Contact(name, phone, email)
 
+                        // Tambahkan ke subcollection contacts pada koleksi users
                         firestore.collection("users").document(userUid)
                             .collection("contacts")
                             .add(contact)
@@ -158,10 +156,9 @@ class ContactFragment : Fragment() {
                                 ).show()
                             }
                     } else {
-                        // Email tidak ditemukan
                         Toast.makeText(
                             requireContext(),
-                            "Email not registered in the database!",
+                            "Email not registered in emailDB!",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -176,6 +173,9 @@ class ContactFragment : Fragment() {
                 }
         }
     }
+
+
+
 
 
 
@@ -237,20 +237,25 @@ class ContactFragment : Fragment() {
     inner class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvName = itemView.findViewById<TextView>(R.id.tv_name)
         private val tvEmail = itemView.findViewById<TextView>(R.id.tv_email)
+        private val tvPhone = itemView.findViewById<TextView>(R.id.tv_phone)
 
         fun bind(contact: Contact, listener: (Contact) -> Unit) {
             tvName.text = contact.name
             tvEmail.text = contact.email
+            tvPhone.text = contact.phone
 
-            // Toggle visibility of email on click
             itemView.setOnClickListener {
                 if (tvEmail.visibility == View.GONE) {
                     tvEmail.visibility = View.VISIBLE
+                    tvPhone.visibility = View.VISIBLE
                 } else {
                     tvEmail.visibility = View.GONE
+                    tvPhone.visibility = View.GONE
                 }
                 listener(contact)
             }
         }
     }
+
+
 }

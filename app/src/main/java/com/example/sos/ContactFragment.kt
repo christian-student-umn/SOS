@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -13,9 +14,9 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
 
 data class Contact(
     val name: String = "",
@@ -23,8 +24,6 @@ data class Contact(
     val email: String = "",
     val profileImageURL: String = ""
 )
-
-
 
 class ContactFragment : Fragment() {
     private lateinit var recyclerViewContacts: RecyclerView
@@ -54,8 +53,7 @@ class ContactFragment : Fragment() {
         loadContactsFromFirestore()
 
         // Set up adapter with contact list and click listener
-        contactAdapter = ContactAdapter(contacts) {
-        }
+        contactAdapter = ContactAdapter(contacts) {}
 
         // Set up RecyclerView
         recyclerViewContacts.layoutManager = LinearLayoutManager(requireContext())
@@ -74,7 +72,6 @@ class ContactFragment : Fragment() {
                 return false
             }
         })
-
 
         // Handle add contact button click
         val btnAddContact = view.findViewById<View>(R.id.btn_add_contact)
@@ -99,7 +96,6 @@ class ContactFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please fill in the email field", Toast.LENGTH_SHORT).show()
             }
         }
-
 
         // Cancel adding contact
         btnCancelContact.setOnClickListener {
@@ -127,7 +123,7 @@ class ContactFragment : Fragment() {
 
             val userUid = currentUser.uid
 
-            // Cek email di emailDB dan ambil data dari subcollection profiles
+            // Check email in emailDB and fetch data from subcollection profiles
             firestore.collection("emailDB").document(email)
                 .collection("profiles").get()
                 .addOnSuccessListener { querySnapshot ->
@@ -138,7 +134,7 @@ class ContactFragment : Fragment() {
 
                         val contact = Contact(name, phone, email)
 
-                        // Tambahkan ke subcollection contacts pada koleksi users
+                        // Add to subcollection contacts in users collection
                         firestore.collection("users").document(userUid)
                             .collection("contacts")
                             .add(contact)
@@ -174,12 +170,6 @@ class ContactFragment : Fragment() {
         }
     }
 
-
-
-
-
-
-
     private fun loadContactsFromFirestore() {
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {
@@ -206,7 +196,6 @@ class ContactFragment : Fragment() {
                 }
         }
     }
-
 
     inner class ContactAdapter(
         private var contacts: List<Contact>,
@@ -238,11 +227,22 @@ class ContactFragment : Fragment() {
         private val tvName = itemView.findViewById<TextView>(R.id.tv_name)
         private val tvEmail = itemView.findViewById<TextView>(R.id.tv_email)
         private val tvPhone = itemView.findViewById<TextView>(R.id.tv_phone)
+        private val ivProfilePicture = itemView.findViewById<ImageView>(R.id.iv_profile_picture)
 
         fun bind(contact: Contact, listener: (Contact) -> Unit) {
             tvName.text = contact.name
             tvEmail.text = contact.email
             tvPhone.text = contact.phone
+
+            // Load profile picture using Glide
+            if (contact.profileImageURL.isNotEmpty()) {
+                Glide.with(itemView.context)
+                    .load(contact.profileImageURL)
+                    .placeholder(R.drawable.ic_account) // Default image while loading
+                    .error(R.drawable.ic_account)       // Default image on error
+                    .circleCrop()
+                    .into(ivProfilePicture)
+            }
 
             itemView.setOnClickListener {
                 if (tvEmail.visibility == View.GONE) {
@@ -256,6 +256,4 @@ class ContactFragment : Fragment() {
             }
         }
     }
-
-
 }

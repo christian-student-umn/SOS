@@ -14,6 +14,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -27,7 +28,9 @@ import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
 import java.text.SimpleDateFormat
@@ -36,7 +39,7 @@ import java.util.Locale
 
 class HomeFragment : Fragment() {
 
-    private val recordDuration = 5000L
+    private val recordDuration = 5000L // 5 seconds for holding the button
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationTextView: TextView
 
@@ -67,16 +70,32 @@ class HomeFragment : Fragment() {
         // Request necessary permissions
         checkAndRequestPermissions()
 
-        sosButton.setOnClickListener {
-            if (checkPermissions()) {
-                startRecording()
-                Handler(Looper.getMainLooper()).postDelayed({
+        // Set OnTouchListener for the SOS button to handle long press
+        sosButton.setOnTouchListener { v, event ->
+            when (event.action) {
+                // When button is pressed down, start recording
+                MotionEvent.ACTION_DOWN -> {
+                    if (checkPermissions()) {
+                        startRecording()
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            // Stop recording after 5 seconds
+                            stopRecording()
+                            uploadAudioToFirebase()
+                            showNotification()
+                            storeFirebaseToken()  // Store the Firebase token
+                        }, recordDuration) // Delay for the required duration
+                    } else {
+                        Toast.makeText(requireContext(), "Please grant required permissions", Toast.LENGTH_SHORT).show()
+                    }
+                    true
+                }
+                // When button is released, stop recording
+                MotionEvent.ACTION_UP -> {
+                    // In case the button is released before 5 seconds, stop the recording manually
                     stopRecording()
-                    uploadAudioToFirebase()
-                    showNotification()
-                }, recordDuration)
-            } else {
-                Toast.makeText(requireContext(), "Please grant required permissions", Toast.LENGTH_SHORT).show()
+                    return@setOnTouchListener true
+                }
+                else -> false
             }
         }
 
@@ -261,4 +280,26 @@ class HomeFragment : Fragment() {
 
         Toast.makeText(requireContext(), "SOS Triggered at $currentLocation!", Toast.LENGTH_SHORT).show()
     }
+
+    // New function to store Firebase token
+    private fun storeFirebaseToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                val userId = FirebaseAuth.getInstance().currentUser?.uid
+                if (userId != null) {
+                    FirebaseDatabase.getInstance()
+                        .getReference("users/$userId/token")
+                        .setValue(token)
+                        .addOnSuccessListener {
+                            Log.d("SOS", "Firebase token saved successfully")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("SOS", "Failed to save Firebase token", e)
+                        }
+                }
+            }
+        }
+    }
 }
+

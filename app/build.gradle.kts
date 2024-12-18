@@ -56,6 +56,8 @@ dependencies {
     implementation ("com.google.firebase:firebase-messaging:23.1.0")
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.functions)
+
 
 //    implementation(libs.mediation.test.suite)
     testImplementation(libs.junit)

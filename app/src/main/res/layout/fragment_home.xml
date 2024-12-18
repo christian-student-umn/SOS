@@ -53,12 +53,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="175dp" />
 
-    <!-- Text "Press for 3 Seconds" -->
+    <!-- Text "Press for 5 Seconds" -->
     <TextView
         android:id="@+id/text_press"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Press for 3 Seconds"
+        android:text="Press for 5 Seconds"
         android:textSize="16sp"
         app:layout_constraintTop_toBottomOf="@id/text_emergency"
         app:layout_constraintStart_toStartOf="parent"

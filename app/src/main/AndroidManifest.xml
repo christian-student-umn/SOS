@@ -41,6 +41,16 @@
             android:name=".MainActivity"
             android:exported="true" />
 
+        <service
+            android:name=".FCM"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+
+
         <!-- Other activities can be declared here -->
         <!-- Map API -->
         <meta-data

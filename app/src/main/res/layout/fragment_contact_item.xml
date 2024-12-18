@@ -1,50 +1,46 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="horizontal"
+    android:padding="8dp">
 
+    <!-- Profile Picture -->
+    <ImageView
+        android:id="@+id/iv_profile_picture"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_account"
+        android:scaleType="centerCrop"
+        android:background="@drawable/circle_background"
+        android:layout_gravity="center_vertical" />
+
+    <!-- Contact Details -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <!-- Foto Profil -->
-        <ImageView
-            android:id="@+id/img_profile"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_marginBottom="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_profile" />
-
-        <!-- Nama Pengguna -->
         <TextView
             android:id="@+id/tv_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="16dp"
-            android:text="Nama Pengguna"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:text="Name"
+            android:textStyle="bold"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tv_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone"
+            android:visibility="gone" />
     </LinearLayout>
-
-    <!-- Email Pengguna, ini akan di-hide dan muncul saat diklik -->
-    <TextView
-        android:id="@+id/tv_email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:text="email@pengguna.com"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/tv_phone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:text="Phone Number"
-        android:textSize="14sp" />
-
 </LinearLayout>

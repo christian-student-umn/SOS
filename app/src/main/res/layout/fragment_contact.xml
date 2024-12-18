@@ -1,7 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <!-- Add Contact Button -->
     <Button
@@ -10,7 +12,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_margin="16dp"
-        android:text="+ Add Contact" />
+        android:text="+ Add Contact"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/orange"/>
 
     <!-- SearchView -->
     <androidx.appcompat.widget.SearchView
@@ -28,7 +32,7 @@
         android:layout_weight="1"
         android:layout_marginTop="8dp" />
 
-    <!-- Contact Form -->
+    <!-- Add Contact Form -->
     <LinearLayout
         android:id="@+id/form_add_contact"
         android:layout_width="match_parent"
@@ -37,6 +41,7 @@
         android:padding="16dp"
         android:background="#FFFFFF"
         android:elevation="4dp"
+        android:layout_gravity="center"
         android:visibility="gone">
 
         <EditText
@@ -44,20 +49,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Email"
-            android:inputType="textEmailAddress" />
-
+            android:inputType="textEmailAddress"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
 
         <Button
             android:id="@+id/btn_save_contact"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save" />
+            android:text="Save"
+            android:backgroundTint="@color/orange"
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
 
         <Button
             android:id="@+id/btn_cancel_contact"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cancel"
-            android:backgroundTint="@android:color/darker_gray" />
+            android:backgroundTint="@android:color/darker_gray"
+            android:padding="12dp" />
     </LinearLayout>
+
 </LinearLayout>

@@ -14,6 +14,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseMessaging.getInstance().isAutoInitEnabled = true
 
         // Periksa apakah user sudah login
         if (FirebaseAuth.getInstance().currentUser == null) {

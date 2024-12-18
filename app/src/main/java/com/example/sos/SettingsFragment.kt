@@ -94,14 +94,20 @@ class SettingsFragment : Fragment() {
 
     private fun uploadImageToFirebase(imageUri: Uri?) {
         if (imageUri != null) {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            val userId = currentUser?.uid ?: return
+            val userEmail = currentUser.email ?: return
             val storageRef = FirebaseStorage.getInstance().getReference("profile_images/$userId")
 
             storageRef.putFile(imageUri)
                 .addOnSuccessListener {
                     storageRef.downloadUrl.addOnSuccessListener { uri ->
-                        firestore.collection("profiles").document(userId)
-                            .update("profileImageUrl", uri.toString())
+                        val profileImageUrl = uri.toString()
+
+                        // Update Firestore document
+                        firestore.collection("emailDB").document(userEmail)
+                            .collection("profiles").document(userId)
+                            .update("profileImageURL", profileImageUrl)
                             .addOnSuccessListener {
                                 Toast.makeText(
                                     requireContext(),
@@ -119,48 +125,65 @@ class SettingsFragment : Fragment() {
                     }
                 }
                 .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show()
                 }
         }
     }
 
     private fun loadUserProfile() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId != null) {
-            // Fetch name, phone, and profile image from "profiles" collection
-            val profileDocRef = firestore.collection("profiles").document(userId)
-            profileDocRef.get().addOnSuccessListener { profileDocument ->
-                if (profileDocument.exists()) {
-                    userName.text = profileDocument.getString("name") ?: "N/A"
-                    userPhone.text = profileDocument.getString("number") ?: "N/A"
-                    val profileImageUrl = profileDocument.getString("profileImageUrl")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val firebaseEmail = currentUser?.email
 
-                    if (!profileImageUrl.isNullOrEmpty()) {
-                        Glide.with(this).load(profileImageUrl).into(profileImage)
+        if (firebaseEmail != null) {
+            // Verifikasi email di emailDB
+            firestore.collection("emailDB").document(firebaseEmail).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val userId = currentUser.uid
+
+                        // Jika email valid, ambil data dari subkoleksi profiles
+                        firestore.collection("emailDB").document(firebaseEmail)
+                            .collection("profiles").document(userId)
+                            .get()
+                            .addOnSuccessListener { profileDocument ->
+                                if (profileDocument.exists()) {
+                                    userName.text = profileDocument.getString("name") ?: "N/A"
+                                    userEmail.text = firebaseEmail // Gunakan firebaseEmail untuk TextView
+                                    userPhone.text = profileDocument.getString("number") ?: "N/A"
+                                    val profileImageUrl = profileDocument.getString("profileImageURL")
+
+                                    if (!profileImageUrl.isNullOrEmpty()) {
+                                        Glide.with(this).load(profileImageUrl).into(profileImage)
+                                    } else {
+                                        profileImage.setImageResource(R.drawable.ic_profile) // Placeholder
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Profile data does not exist",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show()
+                            }
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Email not verified in database",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                } else {
-                    Toast.makeText(requireContext(), "Profile data does not exist", Toast.LENGTH_SHORT).show()
                 }
-            }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load profile data", Toast.LENGTH_SHORT).show()
-            }
-
-            // Fetch email from "emailDB" collection
-            val emailDocRef = firestore.collection("emailDB").document(userId)
-            emailDocRef.get().addOnSuccessListener { emailDocument ->
-                if (emailDocument.exists()) {
-                    userEmail.text = emailDocument.getString("email") ?: "N/A"
-                } else {
-                    Toast.makeText(requireContext(), "Email data does not exist", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Failed to verify email", Toast.LENGTH_SHORT).show()
                 }
-            }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load email data", Toast.LENGTH_SHORT).show()
-            }
         } else {
             Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 
     private fun navigateToProfileFragment() {

@@ -7,13 +7,13 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
+import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -23,21 +23,28 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class HomeFragment : Fragment() {
 
-    private val holdTime = 3000L // 3 seconds in milliseconds
-    private var isHeld = false
-    private val handler = Handler(Looper.getMainLooper())
-
+    private val recordDuration = 5000L
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationTextView: TextView
 
-    private var currentLocation: String = "Unknown Location"  // Variabel untuk menyimpan lokasi
+    private var currentLocation: String = "Unknown Location"
+
+    private var mediaRecorder: MediaRecorder? = null
+    private lateinit var audioFile: File
+    private val firebaseStorage = FirebaseStorage.getInstance()
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
@@ -50,42 +57,29 @@ class HomeFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-
-        // SOS Button
-        val sosButton: Button = view.findViewById(R.id.button)
         locationTextView = view.findViewById(R.id.tv_location)
 
-        // Settings Button
+        val sosButton: Button = view.findViewById(R.id.button)
         val settingsButton: ImageButton = view.findViewById(R.id.button_settings)
-
-        // Notification Button
         val notificationButton: ImageButton = view.findViewById(R.id.button_notification)
 
-        // Set up the hold-down functionality for the SOS button
-        sosButton.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    isHeld = true
-                    handler.postDelayed({
-                        if (isHeld) {
-                            Log.d("SOS", "Button held for 3 seconds") // Verifikasi bahwa tahanan berlangsung
-                            showNotification() // Trigger notification
-                        }
-                    }, holdTime)
-                    true
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    isHeld = false
-                    handler.removeCallbacksAndMessages(null)
-                    true
-                }
-                else -> false
+        // Request necessary permissions
+        checkAndRequestPermissions()
+
+        sosButton.setOnClickListener {
+            if (checkPermissions()) {
+                startRecording()
+                Handler(Looper.getMainLooper()).postDelayed({
+                    stopRecording()
+                    uploadAudioToFirebase()
+                    showNotification()
+                }, recordDuration)
+            } else {
+                Toast.makeText(requireContext(), "Please grant required permissions", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Navigate to NotificationFragment when the notification button is clicked
         notificationButton.setOnClickListener {
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
             transaction.replace(R.id.fragment_container, NotificationFragment())
@@ -93,7 +87,6 @@ class HomeFragment : Fragment() {
             transaction.commit()
         }
 
-        // Navigate to SettingsFragment when the settings button is clicked
         settingsButton.setOnClickListener {
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
             transaction.replace(R.id.fragment_container, SettingsFragment())
@@ -101,31 +94,115 @@ class HomeFragment : Fragment() {
             transaction.commit()
         }
 
-        // Fetch and display current location
         fetchLocation()
-
-        // Create notification channel
         createNotificationChannel()
-
         return view
     }
 
-    private fun fetchLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+    private fun checkAndRequestPermissions() {
+        if (!checkPermissions()) {
             requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
+                arrayOf(
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ), LOCATION_PERMISSION_REQUEST_CODE
             )
+        }
+    }
+
+    private fun checkPermissions(): Boolean {
+        val audioPermission = ActivityCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val locationPermission = ActivityCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return audioPermission && locationPermission
+    }
+
+    private fun startRecording() {
+        val cacheDir = requireContext().externalCacheDir
+        if (cacheDir == null) {
+            Log.e("SOS", "External cache directory is null")
+            Toast.makeText(requireContext(), "Failed to access storage", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        audioFile = File(cacheDir, "SOS_$timestamp.3gp")
+
+        try {
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setOutputFile(audioFile.absolutePath)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                prepare()
+                start()
+            }
+            Log.d("SOS", "Recording started: ${audioFile.absolutePath}")
+        } catch (e: Exception) {
+            Log.e("SOS", "Error starting recording", e)
+            Toast.makeText(requireContext(), "Recording failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopRecording() {
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            Log.d("SOS", "Recording stopped")
+        } catch (e: IllegalStateException) {
+            Log.e("SOS", "Error stopping MediaRecorder", e)
+        }
+    }
+
+    private fun uploadAudioToFirebase() {
+        val audioRef = firebaseStorage.reference.child("audio/${audioFile.name}")
+        val uploadTask = audioRef.putFile(audioFile.toUri())
+
+        uploadTask.addOnSuccessListener {
+            audioRef.downloadUrl.addOnSuccessListener { uri ->
+                Log.d("SOS", "Upload successful: $uri")
+                saveAudioUriToDatabase(uri.toString())
+            }
+        }.addOnFailureListener { e ->
+            Log.e("SOS", "Failed to upload audio", e)
+            Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun saveAudioUriToDatabase(uri: String) {
+        val database = FirebaseDatabase.getInstance().getReference("audio_messages")
+        val audioMessageId = database.push().key ?: return
+
+        val audioMessage = mapOf(
+            "id" to audioMessageId,
+            "uri" to uri,
+            "timestamp" to System.currentTimeMillis(),
+            "location" to currentLocation
+        )
+
+        database.child(audioMessageId).setValue(audioMessage)
+            .addOnSuccessListener {
+                Log.d("SOS", "Audio URI saved successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("SOS", "Failed to save audio URI", e)
+            }
+    }
+
+    private fun fetchLocation() {
+        if (!checkPermissions()) return
+
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             if (location != null) {
-                getLocationAddress(location)  // Update alamat berdasarkan lokasi
+                getLocationAddress(location)
             } else {
                 locationTextView.text = "Unable to fetch location"
             }
@@ -141,16 +218,14 @@ class HomeFragment : Fragment() {
             if (addresses != null && addresses.isNotEmpty()) {
                 val address = addresses[0]
                 val areaName = address.locality ?: address.subAdminArea ?: "Unknown Area"
-                currentLocation = areaName  // Simpan lokasi untuk digunakan dalam notifikasi
+                currentLocation = areaName
                 locationTextView.text = "You are in $areaName"
             } else {
                 locationTextView.text = "Unable to determine location name"
-                currentLocation = "Unknown Location"  // Set default jika alamat tidak ditemukan
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("SOS", "Error fetching address", e)
             locationTextView.text = "Error fetching address"
-            currentLocation = "Error fetching location"
         }
     }
 
@@ -169,16 +244,15 @@ class HomeFragment : Fragment() {
     }
 
     private fun showNotification() {
-        val notificationText = "Help! I am at $currentLocation"  // Gabungkan "Help" dengan lokasi pengguna
+        val notificationText = "Help! I am at $currentLocation"
 
         val builder = NotificationCompat.Builder(requireContext(), CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert) // Ikon untuk notifikasi
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle("SOS Alert")
-            .setContentText(notificationText)  // Tampilkan teks dengan lokasi
+            .setContentText(notificationText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
 
-        // Gunakan timestamp atau ID acak untuk memastikan ID unik
         val notificationId = System.currentTimeMillis().toInt()
 
         with(NotificationManagerCompat.from(requireContext())) {

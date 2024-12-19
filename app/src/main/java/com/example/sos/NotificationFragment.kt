@@ -38,7 +38,7 @@ class NotificationFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_notification, container, false)
 
-        // UI elementss
+        // UI elements
         val notificationContainer: ConstraintLayout = view.findViewById(R.id.notification_container)
         val playButton: ImageView = view.findViewById(R.id.image_play)
         val switchToggle: Switch = view.findViewById(R.id.switch_toggle)

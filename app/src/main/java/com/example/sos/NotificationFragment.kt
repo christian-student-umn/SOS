@@ -1,3 +1,4 @@
+import android.annotation.SuppressLint
 import android.location.Geocoder
 import android.location.Location
 import android.media.MediaPlayer
@@ -8,29 +9,32 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.sos.R
-import com.google.firebase.firestore.FirebaseFirestore
-import com.squareup.picasso.Picasso
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.firestore.FirebaseFirestore
+import com.squareup.picasso.Picasso
 import java.util.*
 
 class NotificationFragment : Fragment() {
 
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var notificationAdapter: NotificationAdapter
+    private val notifications = mutableListOf<Notification>()
     private var mediaPlayer: MediaPlayer? = null
-    private var audioUri: String? = null
     private val db = FirebaseFirestore.getInstance()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationTextView: TextView
     private lateinit var nameTextView: TextView
     private var currentLocation: String = "Unknown"
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -38,46 +42,62 @@ class NotificationFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_notification, container, false)
 
         // UI elements
-        val notificationContainer: ConstraintLayout = view.findViewById(R.id.notification_container)
-        val playButton: ImageView = view.findViewById(R.id.image_play)
-        val switchToggle: Switch = view.findViewById(R.id.switch_toggle)
-        nameTextView = view.findViewById(R.id.text_name_message)
         locationTextView = view.findViewById(R.id.text_location)
+        nameTextView = view.findViewById(R.id.text_name_message)
         val profileImageView: ImageView = view.findViewById(R.id.image_profile)
 
         // Initialize location client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        // Fetch profile data (name and profile picture)
+        // Fetch profile data
         fetchProfileData(nameTextView, profileImageView)
 
         // Fetch location
         fetchLocation()
 
-        // Get audio URI from arguments
-        arguments?.getString("audioUri")?.let {
-            audioUri = it
-        }
-
-        // Set up play button functionality
-        playButton.setOnClickListener {
-            if (!audioUri.isNullOrEmpty()) {
-                playAudio(audioUri!!)
-            } else {
-                Toast.makeText(requireContext(), "No audio file available", Toast.LENGTH_SHORT).show()
+        // Set up RecyclerView
+        recyclerView = view.findViewById(R.id.recycler_notifications)
+        notificationAdapter = NotificationAdapter(
+            notifications,
+            onPlayClick = { notification ->
+                notification.audioUri?.let {
+                    playAudio(it.toString())
+                } ?: Toast.makeText(
+                    requireContext(),
+                    "No audio file available for ${notification.name}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onSwitchToggle = { notification, isChecked ->
+                val message = if (isChecked) "${notification.name} has been helped" else "${notification.name} is still waiting for help"
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                updateNotificationStatus(notification, isChecked)
             }
-        }
+        )
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = notificationAdapter
 
-        // Set up switch toggle listener
-        switchToggle.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                Toast.makeText(requireContext(), "I have helped them", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "I have not helped them yet", Toast.LENGTH_SHORT).show()
-            }
-        }
+        // Fetch data for RecyclerView
+        fetchNotifications()
 
         return view
+    }
+
+    private fun fetchNotifications() {
+        db.collection("notifications").get()
+            .addOnSuccessListener { documents ->
+                notifications.clear()
+                for (document in documents) {
+                    val notification = document.toObject(Notification::class.java).apply {
+                        id = document.id // Assign the Firestore document ID to the notification object
+                    }
+                    notifications.add(notification)
+                }
+                notificationAdapter.notifyDataSetChanged()
+            }
+            .addOnFailureListener { e ->
+                Log.e("NotificationFragment", "Error fetching notifications", e)
+            }
     }
 
     private fun playAudio(uri: String) {
@@ -97,27 +117,39 @@ class NotificationFragment : Fragment() {
         }
     }
 
+    private fun updateNotificationStatus(notification: Notification, isChecked: Boolean) {
+        db.collection("notifications").document(notification.id)
+            .update("isHelped", isChecked)
+            .addOnSuccessListener {
+                Log.d("NotificationFragment", "Notification status updated for ${notification.name}")
+            }
+            .addOnFailureListener { e ->
+                Log.e("NotificationFragment", "Error updating notification status", e)
+            }
+    }
+
     private fun fetchProfileData(nameTextView: TextView, profileImageView: ImageView) {
         val email = "admin@admin.com" // Replace with the current user's email or dynamically fetch it
 
         db.collection("emailDB").document(email).collection("profiles").get()
             .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val name = document.getString("name") ?: "Unknown"
-                    val profileImageUrl = document.getString("profileImageUrl")
+                if (documents.isEmpty) {
+                    nameTextView.text = "Profile data not available"
+                } else {
+                    for (document in documents) {
+                        val name = document.getString("name") ?: "Unknown"
+                        val profileImageUrl = document.getString("profileImageUrl")
 
-                    // Set name
-                    nameTextView.text = "$name needs your help"
-
-                    // Load profile image
-                    profileImageUrl?.let {
-                        Picasso.get().load(it).placeholder(R.drawable.ic_profile).into(profileImageView)
-                    } ?: profileImageView.setImageResource(R.drawable.ic_profile)
+                        nameTextView.text = "$name needs your help"
+                        profileImageUrl?.let {
+                            Picasso.get().load(it).placeholder(R.drawable.ic_profile).into(profileImageView)
+                        } ?: profileImageView.setImageResource(R.drawable.ic_profile)
+                    }
                 }
             }
             .addOnFailureListener { exception ->
                 Log.e("NotificationFragment", "Error fetching profile data", exception)
-                nameTextView.text = "Unknown Name"
+                nameTextView.text = "Error fetching profile"
             }
     }
 

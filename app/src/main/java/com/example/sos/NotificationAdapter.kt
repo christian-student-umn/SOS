@@ -69,3 +69,72 @@
 //
 //
 //}
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.Switch
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.example.sos.R
+import com.squareup.picasso.Picasso
+
+// Data model untuk notifikasi
+data class Notification(
+    val name: String,
+    val message: String,
+    val location: String,
+    val profileImageUrl: String,
+    var isHelped: Boolean = false// Menggunakan var agar nilai bisa diubah
+)
+
+class NotificationAdapter(
+    private val notifications: List<Notification>,
+    private val onPlayClick: (Notification) -> Unit, // Callback untuk tombol Play
+    private val onSwitchToggle: (Notification, Boolean) -> Unit // Callback untuk Switch Toggle
+) : RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder>() {
+
+    // ViewHolder untuk elemen notifikasi
+    inner class NotificationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val profileImage: ImageView = itemView.findViewById(R.id.image_profile)
+        val nameMessageText: TextView = itemView.findViewById(R.id.text_name_message)
+        val locationText: TextView = itemView.findViewById(R.id.text_location)
+        val playButton: ImageView = itemView.findViewById(R.id.image_play)
+        val toggleSwitch: Switch = itemView.findViewById(R.id.switch_toggle)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_notification, parent, false)
+        return NotificationViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: NotificationViewHolder, position: Int) {
+        val notification = notifications[position]
+
+        // Set data ke elemen UI
+        holder.nameMessageText.text = "${notification.name} needs your help"
+        holder.locationText.text = notification.location
+        Picasso.get()
+            .load(notification.profileImageUrl.ifEmpty { null }) // Gunakan URL default jika kosong
+            .placeholder(R.drawable.ic_profile) // Gambar placeholder
+            .into(holder.profileImage)
+
+        // Event listener untuk tombol Play
+        holder.playButton.setOnClickListener {
+            onPlayClick(notification) // Memanggil callback untuk Play
+        }
+
+        // Event listener untuk Switch Toggle
+        holder.toggleSwitch.setOnCheckedChangeListener(null) // Hindari listener lama dipanggil ulang
+        holder.toggleSwitch.isChecked = notification.isHelped
+        holder.toggleSwitch.setOnCheckedChangeListener { _, isChecked ->
+            notification.isHelped = isChecked // Perbarui data status switch
+            onSwitchToggle(notification, isChecked)
+        }
+    }
+
+    override fun getItemCount(): Int = notifications.size
+}
+
+

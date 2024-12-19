@@ -99,7 +99,7 @@ class HomeFragment : Fragment() {
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
             val notificationFragment = NotificationFragment()
             val bundle = Bundle().apply {
-                putString("audioUri", audioFile.absolutePath)
+                putString("audioUri", if (::audioFile.isInitialized) audioFile.absolutePath else null)
             }
             notificationFragment.arguments = bundle
             transaction.replace(R.id.fragment_container, notificationFragment)

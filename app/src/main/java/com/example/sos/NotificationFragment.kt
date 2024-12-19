@@ -12,6 +12,7 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.sos.R
 import com.google.firebase.firestore.FirebaseFirestore
@@ -23,12 +24,12 @@ import java.util.*
 class NotificationFragment : Fragment() {
 
     private var mediaPlayer: MediaPlayer? = null
-    private lateinit var audioUri: String
+    private var audioUri: String? = null
     private val db = FirebaseFirestore.getInstance()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationTextView: TextView
-    private var currentLocation: String = "Unknown"
     private lateinit var nameTextView: TextView
+    private var currentLocation: String = "Unknown"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,7 +48,7 @@ class NotificationFragment : Fragment() {
         // Initialize location client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        // Fetch profile data (name)
+        // Fetch profile data (name and profile picture)
         fetchProfileData(nameTextView, profileImageView)
 
         // Fetch location
@@ -56,16 +57,14 @@ class NotificationFragment : Fragment() {
         // Get audio URI from arguments
         arguments?.getString("audioUri")?.let {
             audioUri = it
-        } ?: run {
-            Toast.makeText(requireContext(), "No audio file to play", Toast.LENGTH_SHORT).show()
         }
 
         // Set up play button functionality
         playButton.setOnClickListener {
-            if (::audioUri.isInitialized) {
-                playAudio(audioUri)
+            if (!audioUri.isNullOrEmpty()) {
+                playAudio(audioUri!!)
             } else {
-                Toast.makeText(requireContext(), "No audio file to play", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "No audio file available", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -112,17 +111,21 @@ class NotificationFragment : Fragment() {
 
                     // Load profile image
                     profileImageUrl?.let {
-                        Picasso.get().load(it).into(profileImageView)
-                    }
+                        Picasso.get().load(it).placeholder(R.drawable.ic_profile).into(profileImageView)
+                    } ?: profileImageView.setImageResource(R.drawable.ic_profile)
                 }
             }
             .addOnFailureListener { exception ->
                 Log.e("NotificationFragment", "Error fetching profile data", exception)
+                nameTextView.text = "Unknown Name"
             }
     }
 
     private fun fetchLocation() {
-        if (!checkPermissions()) return
+        if (!checkPermissions()) {
+            locationTextView.text = "Location permissions are not granted"
+            return
+        }
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             if (location != null) {
@@ -143,20 +146,21 @@ class NotificationFragment : Fragment() {
                 val address = addresses[0]
                 val areaName = address.locality ?: address.subAdminArea ?: "Unknown Area"
                 currentLocation = areaName
-                locationTextView.text = "You are in $areaName"
+                locationTextView.text = "I am at $areaName"
             } else {
                 locationTextView.text = "Unable to determine location name"
             }
         } catch (e: Exception) {
-            Log.e("SOS", "Error fetching address", e)
+            Log.e("NotificationFragment", "Error fetching address", e)
             locationTextView.text = "Error fetching address"
         }
     }
 
-    // Check if permissions are granted (you need to implement this method)
     private fun checkPermissions(): Boolean {
-        // Implement permission checking logic
-        return true
+        val locationPermission = ActivityCompat.checkSelfPermission(
+            requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        return locationPermission == android.content.pm.PackageManager.PERMISSION_GRANTED
     }
 
     override fun onDestroy() {

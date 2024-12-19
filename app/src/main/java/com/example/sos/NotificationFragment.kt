@@ -14,11 +14,12 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.sos.R
 import com.google.firebase.firestore.FirebaseFirestore
-import com.squareup.picasso.Picasso
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.FirebaseAuth
 import java.util.*
 
 class NotificationFragment : Fragment() {
@@ -98,28 +99,58 @@ class NotificationFragment : Fragment() {
     }
 
     private fun fetchProfileData(nameTextView: TextView, profileImageView: ImageView) {
-        val email = "admin@admin.com" // Replace with the current user's email or dynamically fetch it
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
-        db.collection("emailDB").document(email).collection("profiles").get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val name = document.getString("name") ?: "Unknown"
-                    val profileImageUrl = document.getString("profileImageUrl")
+        if (currentUser != null) {
+            val email = currentUser.email
 
-                    // Set name
-                    nameTextView.text = "$name needs your help"
+            if (!email.isNullOrEmpty()) {
+                // Query Firestore for the user's profile using their email
+                db.collection("emailDB").document(email).collection("profiles").get()
+                    .addOnSuccessListener { documents ->
+                        if (!documents.isEmpty) {
+                            for (document in documents) {
+                                val name = document.getString("name") ?: "Unknown"
+                                val profileImageUrl = document.getString("profileImageUrl") ?: ""
 
-                    // Load profile image
-                    profileImageUrl?.let {
-                        Picasso.get().load(it).placeholder(R.drawable.ic_profile).into(profileImageView)
-                    } ?: profileImageView.setImageResource(R.drawable.ic_profile)
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.e("NotificationFragment", "Error fetching profile data", exception)
+                                // Set name
+                                nameTextView.text = "$name needs your help"
+
+                                // Load profile image using Glide
+                                if (profileImageUrl.isNotEmpty()) {
+                                    Glide.with(requireContext())
+                                        .load(profileImageUrl)
+                                        .placeholder(R.drawable.ic_profile) // Placeholder drawable
+                                        .error(R.drawable.ic_profile)       // Error fallback drawable
+                                        .circleCrop()
+                                        .into(profileImageView)
+                                } else {
+                                    profileImageView.setImageResource(R.drawable.ic_profile) // Fallback image
+                                }
+                            }
+                        } else {
+                            nameTextView.text = "Unknown Name"
+                            profileImageView.setImageResource(R.drawable.ic_profile)
+                            Log.w("NotificationFragment", "No profiles found for this user.")
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("NotificationFragment", "Error fetching profile data", exception)
+                        nameTextView.text = "Unknown Name"
+                        profileImageView.setImageResource(R.drawable.ic_profile) // Fallback image
+                    }
+            } else {
+                Log.e("NotificationFragment", "User email is null or empty")
                 nameTextView.text = "Unknown Name"
+                profileImageView.setImageResource(R.drawable.ic_profile)
             }
+        } else {
+            Log.e("NotificationFragment", "No authenticated user found")
+            nameTextView.text = "Unknown Name"
+            profileImageView.setImageResource(R.drawable.ic_profile)
+        }
     }
+
 
     private fun fetchLocation() {
         if (!checkPermissions()) {

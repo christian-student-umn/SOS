@@ -57,7 +57,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.functions)
-
+    implementation ("com.squareup.picasso:picasso:2.8")
 
 //    implementation(libs.mediation.test.suite)
     testImplementation(libs.junit)

@@ -67,33 +67,28 @@ class HomeFragment : Fragment() {
         val settingsButton: ImageButton = view.findViewById(R.id.button_settings)
         val notificationButton: ImageButton = view.findViewById(R.id.button_notification)
 
-        // Request necessary permissions
         checkAndRequestPermissions()
 
         // Set OnTouchListener for the SOS button to handle long press
-        sosButton.setOnTouchListener { v, event ->
+        sosButton.setOnTouchListener { _, event ->
             when (event.action) {
-                // When button is pressed down, start recording
                 MotionEvent.ACTION_DOWN -> {
                     if (checkPermissions()) {
                         startRecording()
                         Handler(Looper.getMainLooper()).postDelayed({
-                            // Stop recording after 5 seconds
                             stopRecording()
                             uploadAudioToFirebase()
                             showNotification()
-                            storeFirebaseToken()  // Store the Firebase token
-                        }, recordDuration) // Delay for the required duration
+                            storeFirebaseToken()
+                        }, recordDuration)
                     } else {
                         Toast.makeText(requireContext(), "Please grant required permissions", Toast.LENGTH_SHORT).show()
                     }
                     true
                 }
-                // When button is released, stop recording
                 MotionEvent.ACTION_UP -> {
-                    // In case the button is released before 5 seconds, stop the recording manually
                     stopRecording()
-                    return@setOnTouchListener true
+                    true
                 }
                 else -> false
             }
@@ -101,7 +96,12 @@ class HomeFragment : Fragment() {
 
         notificationButton.setOnClickListener {
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
-            transaction.replace(R.id.fragment_container, NotificationFragment())
+            val notificationFragment = NotificationFragment()
+            val bundle = Bundle().apply {
+                putString("audioUri", audioFile.absolutePath)
+            }
+            notificationFragment.arguments = bundle
+            transaction.replace(R.id.fragment_container, notificationFragment)
             transaction.addToBackStack(null)
             transaction.commit()
         }
@@ -182,39 +182,40 @@ class HomeFragment : Fragment() {
     }
 
     private fun uploadAudioToFirebase() {
-        val audioRef = firebaseStorage.reference.child("audio/${audioFile.name}")
-        val uploadTask = audioRef.putFile(audioFile.toUri())
+        val storageRef = firebaseStorage.reference
+        val audioUri = audioFile.toUri()
+        val audioRef = storageRef.child("audio/${audioFile.name}")
 
-        uploadTask.addOnSuccessListener {
-            audioRef.downloadUrl.addOnSuccessListener { uri ->
-                Log.d("SOS", "Upload successful: $uri")
-                saveAudioUriToDatabase(uri.toString())
+        audioRef.putFile(audioUri)
+            .addOnSuccessListener {
+                audioRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                    saveAudioMetadata(downloadUri.toString())
+                }
             }
-        }.addOnFailureListener { e ->
-            Log.e("SOS", "Failed to upload audio", e)
-            Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
-        }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to upload audio", Toast.LENGTH_SHORT).show()
+            }
     }
 
-    private fun saveAudioUriToDatabase(uri: String) {
-        val database = FirebaseDatabase.getInstance().getReference("audio_messages")
-        val audioMessageId = database.push().key ?: return
+    private fun saveAudioMetadata(downloadUri: String) {
+        val databaseRef = FirebaseDatabase.getInstance().getReference("users/${FirebaseAuth.getInstance().currentUser?.uid}/audios")
+        val audioId = databaseRef.push().key ?: return
 
-        val audioMessage = mapOf(
-            "id" to audioMessageId,
-            "uri" to uri,
-            "timestamp" to System.currentTimeMillis(),
-            "location" to currentLocation
+        val audioMetadata = mapOf(
+            "id" to audioId,
+            "uri" to downloadUri,
+            "timestamp" to System.currentTimeMillis()
         )
 
-        database.child(audioMessageId).setValue(audioMessage)
+        databaseRef.child(audioId).setValue(audioMetadata)
             .addOnSuccessListener {
-                Log.d("SOS", "Audio URI saved successfully")
+                Toast.makeText(requireContext(), "Audio saved successfully", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { e ->
-                Log.e("SOS", "Failed to save audio URI", e)
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to save audio metadata", Toast.LENGTH_SHORT).show()
             }
     }
+
 
     private fun fetchLocation() {
         if (!checkPermissions()) return
@@ -263,43 +264,25 @@ class HomeFragment : Fragment() {
     }
 
     private fun showNotification() {
-        val notificationText = "Help! I am at $currentLocation"
-
+        val notificationText = "Help! I need assistance!"
         val builder = NotificationCompat.Builder(requireContext(), CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("SOS Alert")
             .setContentText(notificationText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        val notificationId = System.currentTimeMillis().toInt()
 
         with(NotificationManagerCompat.from(requireContext())) {
-            notify(notificationId, builder.build())
+            notify(1, builder.build())
         }
-
-        Toast.makeText(requireContext(), "SOS Triggered at $currentLocation!", Toast.LENGTH_SHORT).show()
     }
 
-    // New function to store Firebase token
     private fun storeFirebaseToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
-                val userId = FirebaseAuth.getInstance().currentUser?.uid
-                if (userId != null) {
-                    FirebaseDatabase.getInstance()
-                        .getReference("users/$userId/token")
-                        .setValue(token)
-                        .addOnSuccessListener {
-                            Log.d("SOS", "Firebase token saved successfully")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("SOS", "Failed to save Firebase token", e)
-                        }
-                }
+                Log.d("SOS", "Firebase Token: $token")
+                // Save token to your database or use it as needed
             }
         }
     }
 }
-

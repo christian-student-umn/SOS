@@ -139,8 +139,9 @@ class ContactFragment : Fragment() {
                             .collection("contacts")
                             .add(contact)
                             .addOnSuccessListener {
+                                // Tambahkan kontak ke daftar lokal dan perbarui adapter
                                 contacts.add(contact)
-                                contactAdapter.notifyDataSetChanged()
+                                contactAdapter.updateContacts(contacts)
                                 Toast.makeText(requireContext(), "Contact added!", Toast.LENGTH_SHORT).show()
                             }
                             .addOnFailureListener { e ->
@@ -170,6 +171,7 @@ class ContactFragment : Fragment() {
         }
     }
 
+
     private fun loadContactsFromFirestore() {
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {
@@ -184,7 +186,7 @@ class ContactFragment : Fragment() {
                         val contact = document.toObject(Contact::class.java)
                         contacts.add(contact)
                     }
-                    contactAdapter.notifyDataSetChanged()
+                    contactAdapter.updateContacts(contacts) // Perbarui data di adapter
                 }
                 .addOnFailureListener { e ->
                     Log.e("Firestore", "Error loading contacts", e)
@@ -197,11 +199,18 @@ class ContactFragment : Fragment() {
         }
     }
 
+
     inner class ContactAdapter(
         private var contacts: MutableList<Contact>,
         private val listener: (Contact) -> Unit
     ) : RecyclerView.Adapter<ContactViewHolder>() {
         private var filteredContacts: MutableList<Contact> = contacts.toMutableList()
+
+        fun updateContacts(newContacts: List<Contact>) {
+            contacts = newContacts.toMutableList()
+            filteredContacts = contacts.toMutableList()
+            notifyDataSetChanged()
+        }
 
         fun filterList(searchQuery: String) {
             filteredContacts = contacts.filter {

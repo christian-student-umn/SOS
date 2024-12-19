@@ -4,6 +4,7 @@ data class Notification(
     val profileImageResId: Int,
     val message: String,
     val location: String,
-    val time: String
+    val time: String,
+    val audioPath: String
 )
 

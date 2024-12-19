@@ -17,7 +17,7 @@
         android:src="@drawable/ic_samplepp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- Notification Message -->
     <TextView
@@ -27,9 +27,11 @@
         android:text="Dad needs your help"
         android:textStyle="bold"
         android:textSize="16sp"
+        android:maxLines="1"
+        android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/ivProfilePicture"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Location icon -->
     <ImageView
@@ -39,7 +41,7 @@
         android:layout_marginTop="8dp"
         android:src="@drawable/ic_location"
         app:layout_constraintStart_toStartOf="@id/tvNotificationMessage"
-        app:layout_constraintTop_toBottomOf="@id/tvNotificationMessage"/>
+        app:layout_constraintTop_toBottomOf="@id/tvNotificationMessage" />
 
     <!-- Location -->
     <TextView
@@ -50,7 +52,7 @@
         android:text="4th Mound road, California"
         app:layout_constraintStart_toEndOf="@id/ivLocationIcon"
         app:layout_constraintTop_toTopOf="@id/ivLocationIcon"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Time of notification -->
     <TextView
@@ -60,6 +62,18 @@
         android:text="9:41"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Play Audio Button -->
+    <ImageButton
+        android:id="@+id/btnPlayAudio"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Play Audio"
+        android:src="@drawable/ic_play"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toBottomOf="@id/ivLocationIcon"
+        app:layout_constraintStart_toStartOf="@id/ivLocationIcon"
+        android:layout_marginTop="8dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

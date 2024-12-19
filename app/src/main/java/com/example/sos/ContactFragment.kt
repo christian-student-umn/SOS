@@ -121,9 +121,19 @@ class ContactFragment : Fragment() {
                 return
             }
 
+            // Cek jika email sudah ada di daftar kontak
+            if (contacts.any { it.email == email }) {
+                Toast.makeText(
+                    requireContext(),
+                    "This contact is already added!",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+
             val userUid = currentUser.uid
 
-            // Check email in emailDB and fetch data from subcollection profiles
+            // Periksa keberadaan email di Firestore
             firestore.collection("emailDB").document(email)
                 .collection("profiles").get()
                 .addOnSuccessListener { querySnapshot ->
@@ -131,15 +141,16 @@ class ContactFragment : Fragment() {
                         val document = querySnapshot.documents.first()
                         val name = document.getString("name") ?: "Unknown"
                         val phone = document.getString("number") ?: "N/A"
+                        val profileImageURL = document.getString("profileImageURL") ?: ""
 
-                        val contact = Contact(name, phone, email)
+                        val contact = Contact(name, phone, email, profileImageURL)
 
-                        // Add to subcollection contacts in users collection
+                        // Tambahkan ke subkoleksi contacts di Firestore
                         firestore.collection("users").document(userUid)
                             .collection("contacts")
                             .add(contact)
                             .addOnSuccessListener {
-                                // Tambahkan kontak ke daftar lokal dan perbarui adapter
+                                // Perbarui daftar kontak lokal dan adapter
                                 contacts.add(contact)
                                 contactAdapter.updateContacts(contacts)
                                 Toast.makeText(requireContext(), "Contact added!", Toast.LENGTH_SHORT).show()
@@ -170,6 +181,8 @@ class ContactFragment : Fragment() {
                 }
         }
     }
+
+
 
 
     private fun loadContactsFromFirestore() {
@@ -250,20 +263,35 @@ class ContactFragment : Fragment() {
                                 .document(document.id)
                                 .delete()
                                 .addOnSuccessListener {
-                                    Toast.makeText(requireContext(), "Contact deleted!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Contact deleted!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     contacts.removeAt(position)
                                     filteredContacts.removeAt(position)
                                     notifyItemRemoved(position)
+
+                                    // Muat ulang kontak dari Firestore
+                                    loadContactsFromFirestore()
                                 }
                                 .addOnFailureListener { e ->
                                     Log.e("Firestore", "Error deleting contact", e)
-                                    Toast.makeText(requireContext(), "Error deleting contact. Try again.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Error deleting contact. Try again.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                         }
                     }
                     .addOnFailureListener { e ->
                         Log.e("Firestore", "Error finding contact to delete", e)
-                        Toast.makeText(requireContext(), "Error deleting contact. Try again.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Error deleting contact. Try again.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
             }
         }

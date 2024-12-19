@@ -22,7 +22,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:queryHint="Search contacts"
+        android:iconifiedByDefault="false"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:theme="@style/CustomSearchView"
+        android:background="@color/app_background"
+        android:padding="10dp"
         android:layout_margin="8dp" />
+
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

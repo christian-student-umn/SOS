@@ -198,38 +198,77 @@ class ContactFragment : Fragment() {
     }
 
     inner class ContactAdapter(
-        private var contacts: List<Contact>,
+        private var contacts: MutableList<Contact>,
         private val listener: (Contact) -> Unit
     ) : RecyclerView.Adapter<ContactViewHolder>() {
-        private var filteredContacts: List<Contact> = contacts
+        private var filteredContacts: MutableList<Contact> = contacts.toMutableList()
 
         fun filterList(searchQuery: String) {
             filteredContacts = contacts.filter {
                 it.name.contains(searchQuery, ignoreCase = true)
-            }
+            }.toMutableList()
             notifyDataSetChanged()
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
-            val view =
-                LayoutInflater.from(parent.context).inflate(R.layout.fragment_contact_item, parent, false)
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.fragment_contact_item, parent, false)
             return ContactViewHolder(view)
         }
 
         override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
-            holder.bind(filteredContacts[position], listener)
+            holder.bind(filteredContacts[position], listener) { contact ->
+                deleteContact(contact, position)
+            }
         }
 
         override fun getItemCount(): Int = filteredContacts.size
+
+        private fun deleteContact(contact: Contact, position: Int) {
+            val currentUser = firebaseAuth.currentUser
+            if (currentUser != null) {
+                val userUid = currentUser.uid
+
+                firestore.collection("users").document(userUid)
+                    .collection("contacts")
+                    .whereEqualTo("email", contact.email)
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        if (!querySnapshot.isEmpty) {
+                            val document = querySnapshot.documents.first()
+                            firestore.collection("users").document(userUid)
+                                .collection("contacts")
+                                .document(document.id)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Toast.makeText(requireContext(), "Contact deleted!", Toast.LENGTH_SHORT).show()
+                                    contacts.removeAt(position)
+                                    filteredContacts.removeAt(position)
+                                    notifyItemRemoved(position)
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("Firestore", "Error deleting contact", e)
+                                    Toast.makeText(requireContext(), "Error deleting contact. Try again.", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error finding contact to delete", e)
+                        Toast.makeText(requireContext(), "Error deleting contact. Try again.", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
     }
+
 
     inner class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvName = itemView.findViewById<TextView>(R.id.tv_name)
         private val tvEmail = itemView.findViewById<TextView>(R.id.tv_email)
         private val tvPhone = itemView.findViewById<TextView>(R.id.tv_phone)
         private val ivProfilePicture = itemView.findViewById<ImageView>(R.id.iv_profile_picture)
+        private val btnDeleteContact = itemView.findViewById<ImageView>(R.id.btn_delete_contact)
 
-        fun bind(contact: Contact, listener: (Contact) -> Unit) {
+        fun bind(contact: Contact, listener: (Contact) -> Unit, deleteListener: (Contact) -> Unit) {
             tvName.text = contact.name
             tvEmail.text = contact.email
             tvPhone.text = contact.phone
@@ -238,8 +277,8 @@ class ContactFragment : Fragment() {
             if (contact.profileImageURL.isNotEmpty()) {
                 Glide.with(itemView.context)
                     .load(contact.profileImageURL)
-                    .placeholder(R.drawable.ic_account) // Default image while loading
-                    .error(R.drawable.ic_account)       // Default image on error
+                    .placeholder(R.drawable.ic_account)
+                    .error(R.drawable.ic_account)
                     .circleCrop()
                     .into(ivProfilePicture)
             }
@@ -254,6 +293,11 @@ class ContactFragment : Fragment() {
                 }
                 listener(contact)
             }
+
+            btnDeleteContact.setOnClickListener {
+                deleteListener(contact)
+            }
         }
     }
+
 }

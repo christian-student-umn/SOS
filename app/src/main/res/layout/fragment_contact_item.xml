@@ -17,9 +17,10 @@
 
     <!-- Contact Details -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/tv_name"
@@ -43,4 +44,14 @@
             android:text="Phone"
             android:visibility="gone" />
     </LinearLayout>
+
+    <!-- Delete Button -->
+    <ImageView
+        android:id="@+id/btn_delete_contact"
+        android:layout_width="48dp"
+        android:layout_height="57dp"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="Delete Contact"
+        android:padding="8dp"
+        android:src="@drawable/ic_delete" />
 </LinearLayout>
